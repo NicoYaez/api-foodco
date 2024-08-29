@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { Schema, model } = mongoose;
 
 // Definir el schema para el Cliente
 const sucursalSchema = new Schema({
@@ -16,7 +17,7 @@ const sucursalSchema = new Schema({
     }
 },{
     timestamps: false,
-    versionKey: true,
+    versionKey: false
 });
 
 module.exports = model("Sucursal", sucursalSchema);

@@ -1,5 +1,5 @@
+const Empleado = require("../models/empleado.js");
 const Cliente = require("../models/cliente.js");
-//const { Role } = require("../models/role");
 const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv");
 dotenv.config();
@@ -7,8 +7,6 @@ const cookieParser = require("cookie-parser");
 const { generateToken } = require("../utils/tokenManager");
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
-
-const { Cliente, Admin } = require('../models');
 
 function generatePassword() {
   const length = 16,
@@ -20,10 +18,9 @@ function generatePassword() {
   return retVal;
 }
 
-const register = async (req, res) => {
-  const { role } = req.body; // Recibo los datos
+const registerEmpleado = async (req, res) => {
+  const { rut, nombre, departamento, rol, sucursal } = req.body; // Recibo los datos
   let { username } = req.body; // Recibo los datos
-  const { name } = req.body; // Recibo los datos
   const email = req.body.email.toLowerCase();
   const password = generatePassword();
 
@@ -36,13 +33,16 @@ const register = async (req, res) => {
     return res.status(400).json({ message: "El correo ya está en uso" });
   }
   let newUser;
-  if (role === 'Cliente') {
-    newUser = new Cliente({
+  if (role === 'Ejecutivo') {
+    newUser = new Empleado({
       username: username,
-      name: name,
       email: email,
       password: password,
-      role: 'Cliente'
+      rut: rut,
+      nombre: nombre,
+      departamento: departamento,
+      rol: 'Ejecutivo',
+      sucursal: sucursal
     });
   } else if (role === 'Admin') {
     newUser = new Admin({
@@ -79,10 +79,11 @@ const registerCliente = async (req, res) => {
   const email = req.body.email.toLowerCase();
   const password = generatePassword();
 
+  //En caso de no entregar el username, se toma el nombre de usuario como el nombre de correo
   if (!username) {
-    return res.status(400).json({ message: "Debe proporcionar un username" });
+    username = email.split('@')[0];
   }
-  // Verificar si ya existe un usuario con el mismo nombre de correo
+  // Verificar si ya existe un usuario con el mismo correo
   const existingUser = await Cliente.findOne({ email });
   if (existingUser) {
     return res.status(400).json({ message: "El correo ya está en uso" });
@@ -225,4 +226,4 @@ const changePassword = async (req, res) => {
   return res.status(200).json({ message: "Contraseña actualizada con éxito" });
 };
 
-module.exports = { register, login, requestPasswordReset, resetPassword, changePassword };
+module.exports = { registerEmpleado, registerCliente, login, requestPasswordReset, resetPassword, changePassword };

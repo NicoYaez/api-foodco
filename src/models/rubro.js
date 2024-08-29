@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const User = require('./empleado');
+const { Schema, model } = mongoose;
 
 // Definir el schema para el Cliente
 const rubroSchema = new Schema({

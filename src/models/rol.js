@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const User = require('./empleado');
+const { Schema, model } = mongoose;
 
 // Definir el schema para el Cliente
 const rolSchema = new Schema({
@@ -7,9 +7,6 @@ const rolSchema = new Schema({
         type: String,
         required: true
     }
-},{
-    timestamps: false,
-    versionKey: true,
 });
 
 module.exports = model("Rol", rolSchema);

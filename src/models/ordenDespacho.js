@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const { Schema, model } = mongoose;
 
-const ordenVentaSchema = new Schema({
+const ordenDespachoSchema = new Schema({
     numero: {
         type: Number,
         unique: true,
@@ -12,23 +12,24 @@ const ordenVentaSchema = new Schema({
         ref: 'Empleado',
         required: true
     },
+    ordenCompra: {
+        type: Schema.Types.ObjectId,
+        ref: 'ordenCompra',
+        required: true
+    },
     cliente: {
         type: Schema.Types.ObjectId,
         ref: 'Cliente',
         required: true
     },
-    productos: [{
+    seleccionProductos: [{
         type: Schema.Types.ObjectId,
-        ref: 'producto',
+        ref: 'seleccionProductos',
         required: true
     }],
-    total: {
-        type: Number,
-        unique: true,
-        required: true
-    },
     fecha: {
         type: Date,
+        default: Date.now, // Asigna la fecha y hora actuales por defecto
         required: true
     }
 },{
@@ -36,4 +37,4 @@ const ordenVentaSchema = new Schema({
     versionKey: false,
 });
 
-module.exports = model("ordenVenta", ordenVentaSchema);
+module.exports = model("ordenDespacho", ordenDespachoSchema);

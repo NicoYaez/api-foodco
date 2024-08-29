@@ -1,6 +1,5 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
-
 const { Schema, model } = mongoose;
 
 const empleadoSchema = new Schema({
@@ -60,4 +59,3 @@ empleadoSchema.methods.comparePassword = async function (password) {
 };
 
 module.exports = model("Empleado", empleadoSchema);
-module.exports = Empleado;

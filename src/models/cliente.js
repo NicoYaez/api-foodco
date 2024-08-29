@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { Schema, model } = mongoose;
 
 // Definir el schema para el Cliente
 const clienteSchema = new Schema({
@@ -24,7 +25,7 @@ const clienteSchema = new Schema({
         type: String,
         required: true
     },
-    ubicacion: {
+    direccion: {
         type: String,
         required: true
     },
@@ -45,5 +46,17 @@ const clienteSchema = new Schema({
     }
 });
 
+clienteSchema.methods.encryptPassword = async password => {
+    const salt = await bcrypt.genSaltSync(10);
+    return await bcrypt.hash(password, salt);
+};
+
+clienteSchema.statics.validatePassword = async function (password, receivedPassword) {
+    return await bcrypt.compare(password, receivedPassword);
+};
+
+clienteSchema.methods.comparePassword = async function (password) {
+    return await bcrypt.compare(password, this.password);
+};
+
 module.exports = model("Cliente", clienteSchema);
-module.exports = Cliente;
