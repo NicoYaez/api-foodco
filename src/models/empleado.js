@@ -30,9 +30,9 @@ const empleadoSchema = new Schema({
         ref: 'Departamento',
         required: true
     },
-    rol: {
+    role: {
         type: Schema.Types.ObjectId,
-        ref: 'Rol',
+        ref: 'Role',
         required: true
     },
     sucursal: {

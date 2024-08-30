@@ -17,7 +17,7 @@ const seleccionProductosSchema = new Schema({
         required: true
     },
     precio: {
-        type: Float32Array,
+        type: Schema.Types.Decimal128,
         required: true
     },
     fecha: {
