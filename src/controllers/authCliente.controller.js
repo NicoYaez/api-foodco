@@ -18,15 +18,10 @@ function generatePassword() {
 }
 
 const register = async (req, res) => {
-    let { username } = req.body; // Recibo los datos
-    const { nombre, nombreEmpresa, ubicacion, rubro, contacto, sucursal } = req.body; // Recibo los datos
+    const { nombre } = req.body; // Recibo los datos
     const email = req.body.email.toLowerCase();
     const password = generatePassword();
 
-    //En caso de no entregar el username, se toma el nombre de usuario como el nombre de correo
-    if (!username) {
-        username = email.split('@')[0];
-    }
     // Verificar si ya existe un usuario con el mismo correo
     const existingUser = await Cliente.findOne({ email });
     if (existingUser) {
@@ -34,27 +29,20 @@ const register = async (req, res) => {
     }
     let newUser;
     newUser = new Cliente({
-        username: username,
-        name: nombre,
+        nombre: nombre,
         email: email,
         password: password,
-        nombreEmpresa: nombreEmpresa,
-        ubicacion: ubicacion,
-        rubro: rubro,
-        contacto: contacto,
-        sucursal: sucursal
     });
 
     newUser.password = await newUser.encryptPassword(password); //Cifrar contraseña
     const userSave = await newUser.save(); //Usuario Guardado
 
-    const { token, expiresIn } = generateToken({ id: userSave._id, username: userSave.username }, res);
+    const { token, expiresIn } = generateToken({ id: userSave._id }, res);
 
     return res.status(200).json({
         token,
         expiresIn,
-        username: userSave.username,
-        name: userSave.name,
+        nombre: userSave.nombre,
         email: userSave.email,
         password // Devuelve la contraseña generada
     });

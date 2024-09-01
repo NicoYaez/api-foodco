@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const { Schema, model } = mongoose;
 
 const seleccionProductosSchema = new Schema({
-    producto: [{
+    productos: [{
         type: Schema.Types.ObjectId,
         ref: 'Producto',
         required: true
@@ -18,7 +18,7 @@ const seleccionProductosSchema = new Schema({
     },
     precio: {
         type: Schema.Types.Decimal128,
-        required: true
+        required: false
     },
     fecha: {
         type: Date,

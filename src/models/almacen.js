@@ -20,11 +20,6 @@ const almacenSchema = new Schema({
         ref: 'Sucursal',
         required: true
     },
-    productoAlmacen: [{
-        type: Schema.Types.ObjectId,
-        ref: 'ProductoAlmacen',
-        required: false // Cambiar a true
-    }],
     ingredienteAlmacen: [{
         type: Schema.Types.ObjectId,
         ref: 'ingredienteAlmacen',

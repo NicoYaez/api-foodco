@@ -11,11 +11,11 @@ const productoSchema = new Schema({
         required: true
     },
     precio: {
-        type: Schema.Types.Decimal128,
+        type: Number,
         required: true
     },
     costoProduccion: {
-        type: Schema.Types.Decimal128,
+        type: Number,
         required: true
     },
     almacen: {
@@ -28,6 +28,9 @@ const productoSchema = new Schema({
         ref: 'ingredienteAlmacen',
         required: true
     }
+},{
+    timestamps: false,
+    versionKey: false,
 });
 
 module.exports = model("Producto", productoSchema);

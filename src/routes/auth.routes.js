@@ -7,8 +7,9 @@ const authJwt = require("../middlewares/auth.jwt");
 const verifyRegister = require("../middlewares/verifyRegister");
 
 //authJwt.isAdmin,
+//[verifyRegister.checkRegisterUser]
 
-router.post('/register/cliente', [verifyRegister.checkRegisterUser], authCliente.register);
+router.post('/register/cliente', authCliente.register);
 
 router.post('/register/empleado', [verifyRegister.checkRegisterUser], authEmpleado.register);
 
