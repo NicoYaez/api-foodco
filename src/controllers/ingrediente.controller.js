@@ -4,7 +4,7 @@ const Almacen = require('../models/almacen');
 
 // Función para crear un ingrediente y guardarlo en un almacén
 const crearIngrediente = async (req, res) => {
-    const { codigoIngrediente, nombre, precio, costo, almacenId, medida, cantidad } = req.body;
+    const { codigoIngrediente, nombre, precio, almacenId, medida, cantidad } = req.body;
 
     try {
         // Verificar si el almacén existe
@@ -18,7 +18,6 @@ const crearIngrediente = async (req, res) => {
             codigoIngrediente,
             nombre,
             precio,
-            costo,
             almacen: almacenId,
             medida,
             cantidad

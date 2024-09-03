@@ -1,68 +1,88 @@
+const mongoose = require('mongoose');
 const Producto = require('../models/producto');
+const Ingrediente = require('../models/ingrediente');
 const IngredienteAlmacen = require('../models/ingredienteAlmacen');
 const Almacen = require('../models/almacen');
 
-const crearProducto = async (req, res) => {
-    const { nombre, cantidad, precio, costoProduccion, almacen, ingredientes } = req.body;
+
+async function crearProducto(req, res) {
+    const { nombre, descripcion, ingredientes, categoria, tipoDeServicio, imagenes = [] } = req.body;
+
+
+    console.log(ingredientes)
+    // Verificar que 'ingredientes' es un arreglo
+    if (!Array.isArray(ingredientes)) {
+        return res.status(400).json({ message: 'El campo ingredientes debe ser un arreglo' });
+    }
+
+    if(!nombre || !descripcion || !categoria || !tipoDeServicio) {
+        return res.status(400).json({ message: 'Faltan campos obligatorios' });
+    }
 
     try {
-        // Verificar si el almacén existe
-        const almacenBD = await Almacen.findById(almacen);
-        if (!almacenBD) {
-            return res.status(404).json({ message: 'Almacén no encontrado' });
-        }
-
-        // Calcular el costo de producción sin descontar el stock
         let costoProduccionTotal = 0;
-        for (const ingrediente of ingredientes) {
-            const { ingredienteId, cantidadRequerida } = ingrediente;
 
-            // Verificar si el ingrediente existe en el almacén
-            const ingredienteAlmacen = await IngredienteAlmacen.findOne({
-                ingrediente: ingredienteId,
-                almacen: almacen
-            });
+        // Iterar sobre los ingredientes proporcionados
+        for (const ingredienteInfo of ingredientes) {
+            const { ingredienteId, cantidadRequerida } = ingredienteInfo;
+
+            //console.log("Buscando IngredienteAlmacen con ID de Ingrediente:", ingredienteId);
+
+            // Buscar el IngredienteAlmacen que tiene el ingrediente con el ID proporcionado
+            const ingredienteAlmacen = await IngredienteAlmacen.findOne({ ingrediente: ingredienteId }).populate('ingrediente');
+
+            //console.log(ingredienteAlmacen)
 
             if (!ingredienteAlmacen) {
-                return res.status(404).json({
-                    message: `Ingrediente con ID ${ingredienteId} no encontrado en el almacén`
-                });
+                return res.status(404).json({ message: `El ingrediente con id ${ingredienteId} no se encuentra en el almacén` });
             }
 
-            // Calcular el costo de producción basado en el ingrediente y su cantidad
-            costoProduccionTotal += ingredienteAlmacen.ingrediente.costo * cantidadRequerida;
+            // Verificar si hay suficiente cantidad en el almacén
+            if (ingredienteAlmacen.cantidad < cantidadRequerida) {
+                return res.status(400).json({ message: `No hay suficiente cantidad del ingrediente ${ingredienteAlmacen.ingrediente.nombre} en el almacén` });
+            }
+
+            // Calcular el costo de producción para este ingrediente
+            const costoPorIngrediente = ingredienteAlmacen.ingrediente.precio * cantidadRequerida;
+            costoProduccionTotal += costoPorIngrediente;
+
+            // Actualizar la cantidad del ingrediente en el almacén (descontar stock)
+            //ingredienteAlmacen.cantidad -= cantidadRequerida;
+            await ingredienteAlmacen.save();
         }
 
-        // Crear el nuevo producto sin alterar el stock de los ingredientes
+        // Crear el nuevo producto
         const nuevoProducto = new Producto({
             nombre,
-            cantidad,
-            precio,
-            costoProduccion,
-            almacen,
-            ingredienteAlmacen: ingredientes.map(i => i.ingredienteId)
+            descripcion,
+            costoProduccion: costoProduccionTotal,
+            ingredientes: ingredientes.map(i => ({
+                ingredienteId: i.ingredienteId,
+                cantidadRequerida: i.cantidadRequerida
+            })),
+            categoria,
+            tipoDeServicio,
+            imagenes
         });
 
-        // Guardar el nuevo producto en la base de datos
+        // Establecer las imágenes (si se proporcionaron)
+        if (imagenes.length > 0) {
+            nuevoProducto.setImagenes(imagenes);
+        }
+
+        // Guardar el producto en la base de datos
         await nuevoProducto.save();
+        return res.status(200).json({ message: 'Producto creado exitosamente', producto: nuevoProducto });
 
-        return res.status(201).json({
-            message: 'Producto creado exitosamente',
-            producto: nuevoProducto
-        });
     } catch (error) {
-        console.error(error);
-        return res.status(500).json({
-            message: 'Error al crear el producto',
-            error: error.message
-        });
+        console.error('Error al crear el producto:', error.message);
+        return res.status(500).json({ message: 'Error al crear el producto', error: error.message });
     }
-};
+}
 
 const mostrarProductos = async (req, res) => {
     try {
-        // Obtener todos los productos de la base de datos
-        const productos = await Producto.find().populate('almacen ingredienteAlmacen');
+        const productos = await Producto.find()
 
         // Verificar si hay productos
         if (productos.length === 0) {
@@ -84,6 +104,28 @@ module.exports = {
     crearProducto,
     mostrarProductos
 };
+
+/*
+{
+  "nombre": "Pizza Margarita",
+  "cantidad": 10,
+  "ingredientes": [
+    {
+      "ingredienteAlmacenId": "66d4aceac976161eef17f634",
+      "cantidadRequerida": 2
+    },
+    {
+      "ingredienteAlmacenId": "64fda8a69c1e5f4f3b0d6a48",
+      "cantidadRequerida": 3
+    }
+  ],
+  "categoria": "Cena",
+  "imagenes": [
+    "pizza1.jpg",
+    "pizza2.jpg"
+  ]
+}
+*/
 
 
 /*

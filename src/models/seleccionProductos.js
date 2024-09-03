@@ -3,21 +3,23 @@ const { Schema, model } = mongoose;
 
 const seleccionProductosSchema = new Schema({
     productos: [{
-        type: Schema.Types.ObjectId,
-        ref: 'Producto',
-        required: true
+        producto: {
+            type: Schema.Types.ObjectId,
+            ref: 'Producto',
+            required: true
+        },
+        cantidad: {
+            type: Number,
+            required: true
+        }
     }],
     cliente: {
         type: Schema.Types.ObjectId,
         ref: 'Cliente',
         required: true
     },
-    cantidad: {
-        type: Number,
-        required: true
-    },
     precio: {
-        type: Schema.Types.Decimal128,
+        type: Number,
         required: false
     },
     fecha: {
@@ -26,7 +28,7 @@ const seleccionProductosSchema = new Schema({
         required: true
     }
 },{
-    timestamps: true,
+    timestamps: false,
     versionKey: false,
 });
 

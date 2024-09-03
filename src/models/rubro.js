@@ -6,10 +6,14 @@ const rubroSchema = new Schema({
     nombre: {
         type: String,
         required: true
+    },
+    clasificacion: {
+        type: String,
+        required: true
     }
 },{
     timestamps: false,
-    versionKey: true,
+    versionKey: false
 });
 
 module.exports = model("Rubro", rubroSchema);

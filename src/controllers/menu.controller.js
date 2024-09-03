@@ -2,11 +2,10 @@ const Menu = require('../models/menu'); // Importa tu modelo Menu
 
 // Controlador para crear un menú semanal con imagen
 const crearMenu = async (req, res) => {
-    const { nombre, descripcion, precio, productos, dieta, categoria, tipoDeServicio } = req.body;
-    const imagenes = req.files ? req.files.map(file => file.filename) : []; // Verifica si se subieron imágenes
+    const { nombre, productos, dieta } = req.body;
 
     try {
-        if (!nombre || !descripcion || !productos || !dieta || !categoria || !tipoDeServicio) {
+        if (!nombre || !productos || !dieta) {
             return res.status(400).json({
                 message: 'Debe proporcionar todos los campos requeridos'
             });
@@ -15,16 +14,10 @@ const crearMenu = async (req, res) => {
         // Crea el menú con los datos proporcionados
         const nuevoMenu = new Menu({
             nombre,
-            descripcion,
-            precio,
             productos,
-            disponible: true, // Por defecto, el menú estará disponible
-            dieta,
-            categoria,
-            tipoDeServicio
+            disponible: false, // Por defecto, el menú no estará disponible
+            dieta
         });
-
-        nuevoMenu.setImagenes(imagenes);
 
         // Guarda el menú en la base de datos
         await nuevoMenu.save();
@@ -46,7 +39,7 @@ const crearMenu = async (req, res) => {
 const verMenus = async (req, res) => {
     try {
         // Buscar todos los menús en la base de datos
-        const menus = await Menu.find();
+        const menus = await Menu.find().populate('productos');
 
         // Devolver la lista de menús encontrados
         return res.status(200).json({
@@ -61,21 +54,63 @@ const verMenus = async (req, res) => {
     }
 };
 
+const verMenusStatus = async (req, res) => {
+    try {
+        const { status } = req.params;
 
-// Controlador para ver menús filtrados por dieta (etiquetas) y categoría
-const verMenusFilter = async (req, res) => {
-    const { categoria, dieta } = req.query; // Obtener los parámetros de filtro de la solicitud
+        if (!status) {
+            return res.status(400).json({
+                message: 'Debe proporcionar un estado'
+            });
+        }
 
-    // Verificar que ambos parámetros estén presentes
-    if (!categoria || !dieta) {
-        return res.status(400).json({
-            message: 'Debe proporcionar tanto la categoría como la dieta para realizar la búsqueda'
+        let query = {};
+
+        // Determinar la consulta basada en el valor del status
+        if (status === 'true') {
+            query.disponible = true;
+        } else if (status === 'false') {
+            query.disponible = false;
+        }
+
+        // Buscar menús en la base de datos según la consulta generada
+        const menus = await Menu.find(query).populate('productos');
+
+        // Devolver la lista de menús encontrados
+        return res.status(200).json({
+            menus
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            message: 'Error al buscar los menús',
+            error: error.message
         });
     }
+};
 
+const verMenusFilter = async (req, res) => {
     try {
-        // Buscar menús en la base de datos que coincidan con los filtros
-        const menus = await Menu.find({ categoria, dieta });
+        // Extraer los filtros de los parámetros de consulta
+        const { categoria, dieta, tipoDeServicio } = req.query;
+
+        // Construir un objeto de filtros dinámicamente
+        let filtros = { disponible: true };
+
+        if (dieta) {
+            filtros.dieta = dieta;
+        }
+        if (tipoDeServicio) {
+            filtros.tipoDeServicio = tipoDeServicio;
+        }
+
+        // Si la categoría está definida, usar $elemMatch para buscar dentro de productos
+        if (categoria) {
+            filtros.productos = { $elemMatch: { categoria: categoria } };
+        }
+
+        // Buscar los menús en la base de datos con los filtros aplicados
+        const menus = await Menu.find(filtros).populate('productos');
 
         // Devolver la lista de menús encontrados
         return res.status(200).json({
@@ -93,5 +128,6 @@ const verMenusFilter = async (req, res) => {
 module.exports = {
     crearMenu,
     verMenus,
-    verMenusFilter
+    verMenusFilter,
+    verMenusStatus
 };

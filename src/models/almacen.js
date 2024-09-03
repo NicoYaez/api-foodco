@@ -22,7 +22,7 @@ const almacenSchema = new Schema({
     },
     ingredienteAlmacen: [{
         type: Schema.Types.ObjectId,
-        ref: 'ingredienteAlmacen',
+        ref: 'IngredienteAlmacen',
         required: false // Cambiar a true
     }]
 },{

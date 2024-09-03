@@ -1,36 +1,60 @@
 const mongoose = require('mongoose');
 const { Schema, model } = mongoose;
 
+const CATEGORIAS_PERMITIDAS = ['Desayuno', 'Almuerzo', 'Cena', 'Postre', 'Colacion'];
+const TIPOS_DE_SERVICIO = ['Cafeteria', 'Eventos', 'Snacks'];
+
+const ingredienteSchema = new Schema({
+    ingredienteId: {
+        type: Schema.Types.ObjectId,
+        ref: 'IngredienteAlmacen',
+        required: true
+    },
+    cantidadRequerida: {
+        type: Number,
+        required: true
+    }
+}, { _id: false });  // Esto desactiva la creación automática del campo _id
+
 const productoSchema = new Schema({
     nombre: {
         type: String,
         required: true
     },
-    cantidad: {
-        type: Number,
+    descripcion: {
+        type: String,
         required: true
     },
     precio: {
         type: Number,
-        required: true
+        required: false
     },
     costoProduccion: {
         type: Number,
         required: true
     },
-    almacen: {
-        type: Schema.Types.ObjectId,
-        ref: 'Almacen',
+    ingredientes: [ingredienteSchema],  // Usamos el subesquema de ingredientes
+    categoria: {
+        type: String,
+        required: true,
+        enum: CATEGORIAS_PERMITIDAS
+    },
+    tipoDeServicio: {
+        type: String,
+        enum: TIPOS_DE_SERVICIO,
         required: true
     },
-    ingredienteAlmacen: {
-        type: Schema.Types.ObjectId,
-        ref: 'ingredienteAlmacen',
-        required: true
-    }
-},{
+    imagenes: [{
+        type: String,
+        required: false
+    }]
+}, {
     timestamps: false,
-    versionKey: false,
+    versionKey: false
 });
+
+productoSchema.methods.setImagenes = function setImagenes(filenames) {
+    this.imagenes = filenames.map(filename => `${process.env.HOST}:${process.env.PORT}/public/images/${filename}`);
+};
 
 module.exports = model("Producto", productoSchema);

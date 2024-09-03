@@ -17,7 +17,7 @@ const almacenRoutes = require('../src/routes/almacen.routes');
 const compraRoutes = require('../src/routes/compra.routes');
 const menuRoutes = require('../src/routes/menu.routes');
 const roleRoutes = require('../src/routes/role.routes');
-const { clearScreenDown } = require('readline');
+const rubroRoutes = require('../src/routes/rubro.routes');
 
 const app = express();
 app.set('PORT', process.env.PORT);
@@ -38,6 +38,7 @@ app.use("/api/v1/almacen", almacenRoutes);
 app.use("/api/v1/menu", menuRoutes);
 app.use("/api/v1/compra", compraRoutes);
 app.use("/api/v1/role", roleRoutes);
+app.use("/api/v1/rubro", rubroRoutes);
 
 //app.get('*', function(req, res){ res.status(404).json({message: '404'}) });
 
