@@ -14,10 +14,6 @@ const ingredienteSchema = new Schema({
         type: Number,
         required: true
     },
-    costo: {
-        type: Number,
-        required: true
-    },
     almacen: {
         type: Schema.Types.ObjectId,
         ref: 'Almacen',

@@ -2,23 +2,25 @@ const mongoose = require('mongoose');
 const { Schema, model } = mongoose;
 
 const seleccionProductosSchema = new Schema({
-    producto: [{
-        type: Schema.Types.ObjectId,
-        ref: 'Producto',
-        required: true
+    productos: [{
+        producto: {
+            type: Schema.Types.ObjectId,
+            ref: 'Producto',
+            required: true
+        },
+        cantidad: {
+            type: Number,
+            required: true
+        }
     }],
     cliente: {
         type: Schema.Types.ObjectId,
         ref: 'Cliente',
         required: true
     },
-    cantidad: {
-        type: Number,
-        required: true
-    },
     precio: {
-        type: Float32Array,
-        required: true
+        type: Number,
+        required: false
     },
     fecha: {
         type: Date,
@@ -26,7 +28,7 @@ const seleccionProductosSchema = new Schema({
         required: true
     }
 },{
-    timestamps: true,
+    timestamps: false,
     versionKey: false,
 });
 

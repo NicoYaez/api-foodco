@@ -19,4 +19,4 @@ const ingredienteAlmacenSchema = new Schema({
     }
 });
 
-module.exports = model("ingredienteAlmacen", ingredienteAlmacenSchema);
+module.exports = model("IngredienteAlmacen", ingredienteAlmacenSchema);

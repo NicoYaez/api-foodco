@@ -1,12 +1,12 @@
 const mongoose = require('mongoose');
 const { Schema, model } = mongoose;
+const bcrypt = require('bcryptjs');
 
 // Definir el schema para el Cliente
 const clienteSchema = new Schema({
     username: {
         type: String,
-        unique: true,
-        required: true
+        required: false
     },
     email: {
         type: String,
@@ -23,26 +23,26 @@ const clienteSchema = new Schema({
     },
     nombreEmpresa: {
         type: String,
-        required: true
+        required: false
     },
     direccion: {
         type: String,
-        required: true
+        required: false
     },
     rubro: {
         type: Schema.Types.ObjectId,
         ref: 'Rubro',
-        required: true
+        required: false
     },
     contacto: {
         type: Schema.Types.ObjectId,
         ref: 'Contacto',
-        required: true
+        required: false
     },
     sucursal: {
         type: Schema.Types.ObjectId,
         ref: 'Sucursal',
-        required: true
+        required: false
     }
 });
 
@@ -51,7 +51,7 @@ clienteSchema.methods.encryptPassword = async password => {
     return await bcrypt.hash(password, salt);
 };
 
-clienteSchema.statics.validatePassword = async function (password, receivedPassword) {
+clienteSchema.methods.validatePassword = async function (password, receivedPassword) {
     return await bcrypt.compare(password, receivedPassword);
 };
 

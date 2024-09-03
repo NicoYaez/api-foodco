@@ -1,5 +1,4 @@
 const Empleado = require("../models/empleado.js");
-const Cliente = require("../models/cliente.js");
 const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv");
 dotenv.config();
@@ -18,8 +17,34 @@ function generatePassword() {
   return retVal;
 }
 
-const registerEmpleado = async (req, res) => {
-  const { rut, nombre, departamento, rol, sucursal } = req.body; // Recibo los datos
+const login = async (req, res) => {
+  try {
+    const { rut, password } = req.body; // Recibimos el RUT y la contraseña
+
+    const empleadoFound = await Empleado.findOne({ rut });
+    if (!empleadoFound) return res.status(404).json({ message: "Empleado no encontrado" });
+
+    // Verificar la contraseña
+    const matchPassword = await empleadoFound.validatePassword(password, empleadoFound.password);
+    if (!matchPassword) return res.status(401).json({ token: null, message: "Contraseña incorrecta" });
+
+    // Generar el token de acceso
+    const expiresIn = 60 * 60 * 24;
+    const tokenPayload = { id: empleadoFound._id, role: empleadoFound.role, userType: 'Empleado' };
+    const token = jwt.sign(tokenPayload, process.env.SECRET_API, { expiresIn });
+
+    // Redirigir al dashboard de empleados
+    const redirectUrl = '/empleado/dashboard';
+
+    return res.status(200).json({ token, expiresIn, redirectUrl });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ message: "Error interno del servidor" });
+  }
+};
+
+const register = async (req, res) => {
+  const { rut, nombre, departamento, roleId, sucursal } = req.body; // Recibo los datos
   let { username } = req.body; // Recibo los datos
   const email = req.body.email.toLowerCase();
   const password = generatePassword();
@@ -33,29 +58,16 @@ const registerEmpleado = async (req, res) => {
     return res.status(400).json({ message: "El correo ya está en uso" });
   }
   let newUser;
-  if (role === 'Ejecutivo') {
-    newUser = new Empleado({
-      username: username,
-      email: email,
-      password: password,
-      rut: rut,
-      nombre: nombre,
-      departamento: departamento,
-      rol: 'Ejecutivo',
-      sucursal: sucursal
-    });
-  } else if (role === 'Admin') {
-    newUser = new Admin({
-      username: username,
-      name: name,
-      email: email,
-      password: password,
-      role: 'Admin'
-      
-    });
-  } else {
-    return res.status(400).json({ message: "Rol inválido" });
-  }
+  newUser = new Empleado({
+    username: username,
+    email: email,
+    password: password,
+    rut: rut,
+    nombre: nombre,
+    departamento: departamento,
+    role: roleId,
+    sucursal: sucursal
+  });
 
   newUser.password = await newUser.encryptPassword(password); //Cifrar contraseña
   const userSave = await newUser.save(); //Usuario Guardado
@@ -71,80 +83,6 @@ const registerEmpleado = async (req, res) => {
     role: userSave.role,
     password // Devuelve la contraseña generada
   });
-};
-
-const registerCliente = async (req, res) => {
-  let { username } = req.body; // Recibo los datos
-  const { nombre, nombreEmpresa, ubicacion, rubro, contacto, sucursal } = req.body; // Recibo los datos
-  const email = req.body.email.toLowerCase();
-  const password = generatePassword();
-
-  //En caso de no entregar el username, se toma el nombre de usuario como el nombre de correo
-  if (!username) {
-    username = email.split('@')[0];
-  }
-  // Verificar si ya existe un usuario con el mismo correo
-  const existingUser = await Cliente.findOne({ email });
-  if (existingUser) {
-    return res.status(400).json({ message: "El correo ya está en uso" });
-  }
-  let newUser;
-  newUser = new Cliente({
-    username: username,
-    name: nombre,
-    email: email,
-    password: password,
-    nombreEmpresa: nombreEmpresa,
-    ubicacion: ubicacion,
-    rubro: rubro,
-    contacto: contacto,
-    sucursal: sucursal
-  });
-
-  newUser.password = await newUser.encryptPassword(password); //Cifrar contraseña
-  const userSave = await newUser.save(); //Usuario Guardado
-
-  const { token, expiresIn } = generateToken({ id: userSave._id, username: userSave.username }, res);
-
-  return res.status(200).json({
-    token,
-    expiresIn,
-    username: userSave.username,
-    name: userSave.name,
-    email: userSave.email,
-    password // Devuelve la contraseña generada
-  });
-};
-
-const login = async (req, res, next) => {
-  try {
-    const rut = req.body.rut; // Recibo el RUT
-    const password = req.body.password; // Recibo la contraseña
-
-    console.log(rut)
-
-    const userFound = await User.findOne({rut: rut});
-    if (!userFound)
-      return res.status(404).json({ message: "Usuario no encontrado" });
-
-    //Verificar Contraseñas
-    const matchPassword = await User.validatePassword(
-      req.body.password,
-      userFound.password
-    );
-
-    if (!matchPassword)
-      return res
-        .status(401)
-        .json({ token: null, message: "Contraseña incorrecta" });
-    const expiresIn = 60 * 60 * 24;
-
-    const token = jwt.sign({ id: userFound._id, role: userFound.role }, process.env.SECRET_API, { expiresIn });
-    return res.status(200).json({ token, expiresIn });
-  } catch (error) {
-    console.log(error);
-    return res.status(500).json({ message: "Error interno del servidor" });
-  };
 };
 
 const requestPasswordReset = async (req, res) => {
@@ -226,4 +164,4 @@ const changePassword = async (req, res) => {
   return res.status(200).json({ message: "Contraseña actualizada con éxito" });
 };
 
-module.exports = { registerEmpleado, registerCliente, login, requestPasswordReset, resetPassword, changePassword };
+module.exports = { register, login };
