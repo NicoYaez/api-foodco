@@ -4,7 +4,7 @@ const IngredienteAlmacen = require('../models/ingredienteAlmacen');
 
 const crearAlmacen = async (req, res) => {
     try {
-        const { codigoAlmacen, capacidad, direccion, sucursal, productoAlmacen, ingredienteAlmacen } = req.body;
+        const { codigoAlmacen, capacidad, direccion, sucursal} = req.body;
 
         // Validar que todos los campos requeridos están presentes
         if (!codigoAlmacen || !capacidad || !direccion || !sucursal) {
@@ -17,8 +17,7 @@ const crearAlmacen = async (req, res) => {
             capacidad,
             direccion,
             sucursal,
-            productoAlmacen: productoAlmacen || [], // Asegurarse de que sea un array, incluso si está vacío
-            ingredienteAlmacen: ingredienteAlmacen || [] // Asegurarse de que sea un array, incluso si está vacío
+            ingredienteAlmacen: [] // Asegurarse de que sea un array, incluso si está vacío
         });
 
         // Guardar el almacén en la base de datos

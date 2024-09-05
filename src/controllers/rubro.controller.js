@@ -28,12 +28,16 @@ exports.crearRubro = async (req, res) => {
 // Leer todos los rubros (Read)
 exports.obtenerRubros = async (req, res) => {
     try {
-        const rubros = await Rubro.find();
+        let rubros = await Rubro.find();
+        // Ordenar rubros por clasificacion
+        rubros = rubros.sort((a, b) => a.clasificacion.localeCompare(b.clasificacion));
+        
         res.status(200).json(rubros);
     } catch (error) {
         res.status(500).json({ error: 'Error al obtener los rubros' });
     }
 };
+
 
 // Leer un rubro por ID (Read)
 exports.obtenerRubroPorId = async (req, res) => {

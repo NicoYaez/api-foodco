@@ -4,7 +4,7 @@ const { Schema, model } = mongoose;
 // Definir el schema para el Cliente
 const sucursalSchema = new Schema({
     codigoSucursal: {
-        type: Number,
+        type: String,
         required: true
     },
     nombre: {
