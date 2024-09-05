@@ -1,4 +1,9 @@
-const Cliente = require("../models/cliente.js");
+// controllers/registerController.js
+const Cliente = require('../models/cliente');
+const Empresa = require('../models/empresa');
+const Contacto = require('../models/contacto');
+const Sucursal = require('../models/sucursal');
+
 const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv");
 dotenv.config();
@@ -7,45 +12,77 @@ const { generateToken } = require("../utils/tokenManager");
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 
-function generatePassword() {
-    const length = 16,
-        charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-    let retVal = "";
-    for (let i = 0, n = charset.length; i < length; ++i) {
-        retVal += charset.charAt(Math.floor(Math.random() * n));
-    }
-    return retVal;
-}
-
 const register = async (req, res) => {
-    const { nombre } = req.body; // Recibo los datos
+    const { username, password, empresa, contacto, sucursal } = req.body;
     const email = req.body.email.toLowerCase();
-    const password = generatePassword();
 
-    // Verificar si ya existe un usuario con el mismo correo
-    const existingUser = await Cliente.findOne({ email });
-    if (existingUser) {
-        return res.status(400).json({ message: "El correo ya está en uso" });
+    try {
+        // Verificar si ya existe un cliente con el mismo correo
+        const existingUser = await Cliente.findOne({ email });
+        if (existingUser) {
+            return res.status(400).json({ message: "El correo ya está en uso" });
+        }
+
+        // Crear nueva empresa si se proporciona
+        let savedEmpresa;
+        if (empresa) {
+            const newEmpresa = new Empresa({
+                rut_empresa: empresa.rut_empresa,
+                giro: empresa.giro,
+                direccion: empresa.direccion,
+                comuna: empresa.comuna,
+                ciudad: empresa.ciudad,
+                correo_contacto: empresa.correo_contacto,
+                telefono_empresa: empresa.telefono_empresa,
+                nombre_empresa: empresa.nombre_empresa,
+                rubro: empresa.rubro
+            });
+            savedEmpresa = await newEmpresa.save();
+        }
+
+        // Crear nuevo cliente
+        let newClient = new Cliente({
+            username: username,
+            email: email,
+            password: password,
+            empresa: savedEmpresa ? savedEmpresa._id : null,  // Asigna el ID de la empresa guardada
+            sucursal: sucursal
+        });
+
+        // Encriptar la contraseña
+        newClient.password = await newClient.encryptPassword(password);
+
+        // Guardar contacto si se proporciona
+        if (contacto) {
+            const newContact = new Contacto({
+                nombre: contacto.nombre,
+                apellido: contacto.apellido,
+                telefono: contacto.telefono,
+                email: contacto.email
+            });
+            const savedContact = await newContact.save();
+            newClient.contacto = savedContact._id;
+        }
+
+        // Guardar cliente
+        const userSave = await newClient.save();
+
+        // Generar token
+        const { token, expiresIn } = generateToken({ id: userSave._id, type: 'cliente' }, res);
+
+        // Responder con los datos del cliente
+        return res.status(200).json({
+            token,
+            expiresIn,
+            username: userSave.username,
+            email: userSave.email,
+            password: userSave.password,  // Devuelve la contraseña en respuesta solo en registro
+            empresa: savedEmpresa ? savedEmpresa : null
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: 'Error al registrar el cliente', error: error.message });
     }
-    let newUser;
-    newUser = new Cliente({
-        nombre: nombre,
-        email: email,
-        password: password,
-    });
-
-    newUser.password = await newUser.encryptPassword(password); //Cifrar contraseña
-    const userSave = await newUser.save(); //Usuario Guardado
-
-    const { token, expiresIn } = generateToken({ id: userSave._id }, res);
-
-    return res.status(200).json({
-        token,
-        expiresIn,
-        nombre: userSave.nombre,
-        email: userSave.email,
-        password // Devuelve la contraseña generada
-    });
 };
 
 const login = async (req, res) => {
@@ -74,7 +111,26 @@ const login = async (req, res) => {
     }
 };
 
+const verClientes = async (req, res) => {
+    try {
+        // Obtener todos los clientes de la base de datos
+        const clientes = await Cliente.find().populate('contacto').populate('empresa').populate('sucursal');
+
+        // Si no hay clientes registrados
+        if (clientes.length === 0) {
+            return res.status(404).json({ message: "No hay clientes registrados" });
+        }
+
+        // Retornar la lista de clientes
+        return res.status(200).json(clientes);
+    } catch (error) {
+        console.error('Error al obtener los clientes:', error);
+        return res.status(500).json({ message: 'Error interno del servidor' });
+    }
+};
+
 module.exports = {
     register,
-    login
+    login,
+    verClientes
 };

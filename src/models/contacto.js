@@ -21,8 +21,9 @@ const contactoSchema = new Schema({
         type: String,
         required: true
     }
+},{
+    timestamps: false,
+    versionKey: false,
 });
 
-// Definir discriminador para Ejecutivo_Ventas
-const Contacto = Cliente.discriminator('Contacto', contactoSchema);
-module.exports = Contacto;
+module.exports = model("Contacto", contactoSchema);

@@ -17,21 +17,9 @@ const clienteSchema = new Schema({
         type: String,
         required: true
     },
-    nombre: {
-        type: String,
-        required: true
-    },
-    nombreEmpresa: {
-        type: String,
-        required: false
-    },
-    direccion: {
-        type: String,
-        required: false
-    },
-    rubro: {
+    empresa: {
         type: Schema.Types.ObjectId,
-        ref: 'Rubro',
+        ref: 'Empresa',
         required: false
     },
     contacto: {
@@ -44,7 +32,11 @@ const clienteSchema = new Schema({
         ref: 'Sucursal',
         required: false
     }
+},{
+    timestamps: false,
+    versionKey: false,
 });
+
 
 clienteSchema.methods.encryptPassword = async password => {
     const salt = await bcrypt.genSaltSync(10);

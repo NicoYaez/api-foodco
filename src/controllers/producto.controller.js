@@ -8,8 +8,6 @@ const Almacen = require('../models/almacen');
 async function crearProducto(req, res) {
     const { nombre, descripcion, ingredientes, categoria, tipoDeServicio, imagenes = [] } = req.body;
 
-
-    console.log(ingredientes)
     // Verificar que 'ingredientes' es un arreglo
     if (!Array.isArray(ingredientes)) {
         return res.status(400).json({ message: 'El campo ingredientes debe ser un arreglo' });
@@ -100,9 +98,33 @@ const mostrarProductos = async (req, res) => {
     }
 };
 
+const verProductoPorId = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        // Buscar el producto por su ID
+        const producto = await Producto.findById(id);
+
+        // Verificar si se encontró el producto
+        if (!producto) {
+            return res.status(404).json({ message: `Producto con id ${id} no encontrado` });
+        }
+
+        // Devolver el producto encontrado
+        return res.status(200).json({ producto });
+    } catch (error) {
+        console.error('Error al obtener el producto:', error);
+        return res.status(500).json({
+            message: 'Error al obtener el producto',
+            error: error.message
+        });
+    }
+};
+
 module.exports = {
     crearProducto,
-    mostrarProductos
+    mostrarProductos,
+    verProductoPorId
 };
 
 /*
