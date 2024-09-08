@@ -7,6 +7,9 @@ const roleSchema = new Schema({
         type: String,
         required: true
     }
+},{
+    timestamps: false,
+    versionKey: false
 });
 
 module.exports = model("Role", roleSchema);

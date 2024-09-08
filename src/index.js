@@ -21,6 +21,9 @@ const rubroRoutes = require('../src/routes/rubro.routes');
 const seleccionRoutes = require('../src/routes/seleccion.routes');
 const ordenRoutes = require('../src/routes/orden.routes.js');
 const devRoutes = require('../src/routes/dev.routes.js');
+const tokenRoutes = require('../src/routes/token.routes');
+const departamentoRoutes = require('../src/routes/departamento.routes');
+const clienteRoutes = require('../src/routes/cliente.routes');
 
 const app = express();
 app.set('PORT', process.env.PORT);
@@ -49,7 +52,9 @@ app.use("/api/v1/rubro", rubroRoutes);
 app.use("/api/v1/seleccion-productos", seleccionRoutes);
 app.use("/api/v1/orden-compra", ordenRoutes);
 app.use("/api/v1/dev", devRoutes);
-
+app.use("/api/v1/verify", tokenRoutes);
+app.use("/api/v1/departamento", departamentoRoutes);
+app.use("/api/v1/cliente", clienteRoutes);
 
 //app.get('*', function(req, res){ res.status(404).json({message: 'ERROR 404'}) });
 

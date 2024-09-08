@@ -5,7 +5,6 @@ const { Schema, model } = mongoose;
 const empleadoSchema = new Schema({
     username: {
         type: String,
-        unique: true,
         required: true
     },
     email: {
@@ -50,7 +49,7 @@ empleadoSchema.methods.encryptPassword = async password => {
     return await bcrypt.hash(password, salt);
 };
 
-empleadoSchema.statics.validatePassword = async function (password, receivedPassword) {
+empleadoSchema.methods.validatePassword = async function (password, receivedPassword) {
     return await bcrypt.compare(password, receivedPassword);
 };
 

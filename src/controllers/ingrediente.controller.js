@@ -96,8 +96,97 @@ const verIngredientePorId = async (req, res) => {
     }
 };
 
+const actualizarIngrediente = async (req, res) => {
+    const { id } = req.params; // ID del ingrediente que se va a actualizar
+    const { codigoIngrediente, nombre, precio, almacenId, medida, cantidad } = req.body;
+
+    try {
+        // Buscar el ingrediente por su ID
+        const ingrediente = await Ingrediente.findById(id);
+        if (!ingrediente) {
+            return res.status(404).json({ message: `Ingrediente con id ${id} no encontrado` });
+        }
+
+        // Actualizar solo los campos proporcionados
+        if (codigoIngrediente) ingrediente.codigoIngrediente = codigoIngrediente;
+        if (nombre) ingrediente.nombre = nombre;
+        if (precio) ingrediente.precio = precio;
+        if (medida) ingrediente.medida = medida;
+        if (cantidad) ingrediente.cantidad = cantidad;
+
+        // Si se pasa un nuevo almacenId, actualizamos el almacen del ingrediente
+        if (almacenId) {
+            const almacen = await Almacen.findById(almacenId);
+            if (!almacen) {
+                return res.status(404).json({ message: 'Almacén no encontrado' });
+            }
+            ingrediente.almacen = almacenId;
+
+            // También actualizamos el almacén con el nuevo ingrediente si es necesario
+            const nuevoIngredienteAlmacen = await IngredienteAlmacen.findOne({ ingrediente: id, almacen: almacenId });
+            if (!nuevoIngredienteAlmacen) {
+                const nuevaEntradaIngredienteAlmacen = new IngredienteAlmacen({
+                    ingrediente: id,
+                    almacen: almacenId,
+                    cantidad: cantidad || ingrediente.cantidad
+                });
+
+                // Guardar la relación del ingrediente en el almacén
+                await nuevaEntradaIngredienteAlmacen.save();
+                almacen.ingredienteAlmacen.push(nuevaEntradaIngredienteAlmacen._id);
+                await almacen.save();
+            }
+        }
+
+        // Guardar los cambios del ingrediente
+        await ingrediente.save();
+
+        return res.status(200).json({ message: 'Ingrediente actualizado exitosamente', ingrediente });
+    } catch (error) {
+        console.error('Error al actualizar el ingrediente:', error.message);
+        return res.status(500).json({ message: 'Error al actualizar el ingrediente', error: error.message });
+    }
+};
+
+const eliminarIngrediente = async (req, res) => {
+    const { id } = req.params;  // ID del ingrediente a eliminar
+
+    try {
+        // Buscar el ingrediente por su ID
+        const ingrediente = await Ingrediente.findById(id);
+        if (!ingrediente) {
+            return res.status(404).json({ message: `Ingrediente con id ${id} no encontrado` });
+        }
+
+        // Eliminar el ingrediente del stock del almacén
+        const ingredienteAlmacen = await IngredienteAlmacen.findOne({ ingrediente: id });
+        if (ingredienteAlmacen) {
+            // Eliminar la referencia del ingrediente del almacén
+            const almacen = await Almacen.findById(ingredienteAlmacen.almacen);
+            if (almacen) {
+                almacen.ingredienteAlmacen.pull(ingredienteAlmacen._id);
+                await almacen.save();
+            }
+
+            // Eliminar la entrada del ingrediente en el almacén
+            await ingredienteAlmacen.remove();
+        }
+
+        // Eliminar el ingrediente
+        await ingrediente.remove();
+
+        return res.status(200).json({ message: 'Ingrediente eliminado exitosamente' });
+    } catch (error) {
+        console.error('Error al eliminar el ingrediente:', error.message);
+        return res.status(500).json({ message: 'Error al eliminar el ingrediente', error: error.message });
+    }
+};
+
+
 module.exports = {
     crearIngrediente,
     verIngredientes,
-    verIngredientePorId
+    verIngredientePorId,
+    actualizarIngrediente,
+    eliminarIngrediente
 };

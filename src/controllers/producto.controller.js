@@ -4,16 +4,15 @@ const Ingrediente = require('../models/ingrediente');
 const IngredienteAlmacen = require('../models/ingredienteAlmacen');
 const Almacen = require('../models/almacen');
 
-
 async function crearProducto(req, res) {
-    const { nombre, descripcion, ingredientes, categoria, tipoDeServicio, imagenes = [] } = req.body;
+    const { nombre, descripcion, ingredientes, categoria, tipoDeServicio, precio, imagenes = [] } = req.body;
 
     // Verificar que 'ingredientes' es un arreglo
     if (!Array.isArray(ingredientes)) {
         return res.status(400).json({ message: 'El campo ingredientes debe ser un arreglo' });
     }
 
-    if(!nombre || !descripcion || !categoria || !tipoDeServicio) {
+    if (!nombre || !descripcion || !categoria || !tipoDeServicio || !precio) {
         return res.status(400).json({ message: 'Faltan campos obligatorios' });
     }
 
@@ -22,17 +21,13 @@ async function crearProducto(req, res) {
 
         // Iterar sobre los ingredientes proporcionados
         for (const ingredienteInfo of ingredientes) {
-            const { ingredienteId, cantidadRequerida } = ingredienteInfo;
-
-            //console.log("Buscando IngredienteAlmacen con ID de Ingrediente:", ingredienteId);
+            const { ingrediente, cantidadRequerida } = ingredienteInfo;
 
             // Buscar el IngredienteAlmacen que tiene el ingrediente con el ID proporcionado
-            const ingredienteAlmacen = await IngredienteAlmacen.findOne({ ingrediente: ingredienteId }).populate('ingrediente');
-
-            //console.log(ingredienteAlmacen)
+            const ingredienteAlmacen = await IngredienteAlmacen.findOne({ ingrediente }).populate('ingrediente');
 
             if (!ingredienteAlmacen) {
-                return res.status(404).json({ message: `El ingrediente con id ${ingredienteId} no se encuentra en el almacén` });
+                return res.status(404).json({ message: `El ingrediente con id ${ingrediente} no se encuentra en el almacén` });
             }
 
             // Verificar si hay suficiente cantidad en el almacén
@@ -44,8 +39,7 @@ async function crearProducto(req, res) {
             const costoPorIngrediente = ingredienteAlmacen.ingrediente.precio * cantidadRequerida;
             costoProduccionTotal += costoPorIngrediente;
 
-            // Actualizar la cantidad del ingrediente en el almacén (descontar stock)
-            //ingredienteAlmacen.cantidad -= cantidadRequerida;
+            // Actualizar la cantidad del ingrediente en el almacén
             await ingredienteAlmacen.save();
         }
 
@@ -54,8 +48,9 @@ async function crearProducto(req, res) {
             nombre,
             descripcion,
             costoProduccion: costoProduccionTotal,
+            precio,  // Almacenamos el precio
             ingredientes: ingredientes.map(i => ({
-                ingredienteId: i.ingredienteId,
+                ingrediente: i.ingrediente,
                 cantidadRequerida: i.cantidadRequerida
             })),
             categoria,
@@ -121,34 +116,99 @@ const verProductoPorId = async (req, res) => {
     }
 };
 
+const actualizarProducto = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { nombre, descripcion, ingredientes, categoria, tipoDeServicio, precio, imagenes } = req.body;
+
+        // Verificar si el producto existe
+        const producto = await Producto.findById(id);
+        if (!producto) {
+            return res.status(404).json({ message: `Producto con id ${id} no encontrado` });
+        }
+
+        // Actualizar solo los campos que se proporcionan en la solicitud
+        if (nombre) producto.nombre = nombre;
+        if (descripcion) producto.descripcion = descripcion;
+        if (categoria) producto.categoria = categoria;
+        if (tipoDeServicio) producto.tipoDeServicio = tipoDeServicio;
+        if (precio) producto.precio = precio;
+
+        // Si se proporcionan ingredientes, recalcular el costo de producción
+        if (ingredientes) {
+            if (!Array.isArray(ingredientes)) {
+                return res.status(400).json({ message: 'El campo ingredientes debe ser un arreglo' });
+            }
+
+            let costoProduccionTotal = 0;
+
+            for (const ingredienteInfo of ingredientes) {
+                const { ingrediente, cantidadRequerida } = ingredienteInfo;
+
+                // Buscar el ingrediente en el almacén
+                const ingredienteAlmacen = await IngredienteAlmacen.findOne({ ingrediente }).populate('ingrediente');
+                if (!ingredienteAlmacen) {
+                    return res.status(404).json({ message: `El ingrediente con id ${ingrediente} no se encuentra en el almacén` });
+                }
+
+                // Verificar si hay suficiente cantidad en el almacén
+                if (ingredienteAlmacen.cantidad < cantidadRequerida) {
+                    return res.status(400).json({ message: `No hay suficiente cantidad del ingrediente ${ingredienteAlmacen.ingrediente.nombre} en el almacén` });
+                }
+
+                // Calcular el costo de producción
+                const costoPorIngrediente = ingredienteAlmacen.ingrediente.precio * cantidadRequerida;
+                costoProduccionTotal += costoPorIngrediente;
+            }
+
+            producto.ingredientes = ingredientes.map(i => ({
+                ingrediente: i.ingrediente,
+                cantidadRequerida: i.cantidadRequerida
+            }));
+
+            producto.costoProduccion = costoProduccionTotal;
+        }
+
+        // Si se proporcionan imágenes, actualizarlas
+        if (imagenes && Array.isArray(imagenes)) {
+            producto.imagenes = imagenes;
+        }
+
+        // Guardar el producto actualizado
+        await producto.save();
+        return res.status(200).json({ message: 'Producto actualizado exitosamente', producto });
+    } catch (error) {
+        console.error('Error al actualizar el producto:', error.message);
+        return res.status(500).json({ message: 'Error al actualizar el producto', error: error.message });
+    }
+};
+
+const eliminarProducto = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        // Verificar si el producto existe
+        const producto = await Producto.findById(id);
+        if (!producto) {
+            return res.status(404).json({ message: `Producto con id ${id} no encontrado` });
+        }
+
+        // Eliminar el producto
+        await producto.remove();
+        return res.status(200).json({ message: 'Producto eliminado exitosamente' });
+    } catch (error) {
+        console.error('Error al eliminar el producto:', error.message);
+        return res.status(500).json({ message: 'Error al eliminar el producto', error: error.message });
+    }
+};
+
 module.exports = {
     crearProducto,
     mostrarProductos,
-    verProductoPorId
+    verProductoPorId,
+    actualizarProducto,
+    eliminarProducto
 };
-
-/*
-{
-  "nombre": "Pizza Margarita",
-  "cantidad": 10,
-  "ingredientes": [
-    {
-      "ingredienteAlmacenId": "66d4aceac976161eef17f634",
-      "cantidadRequerida": 2
-    },
-    {
-      "ingredienteAlmacenId": "64fda8a69c1e5f4f3b0d6a48",
-      "cantidadRequerida": 3
-    }
-  ],
-  "categoria": "Cena",
-  "imagenes": [
-    "pizza1.jpg",
-    "pizza2.jpg"
-  ]
-}
-*/
-
 
 /*
 const realizarVenta = async (req, res) => {

@@ -5,9 +5,9 @@ const CATEGORIAS_PERMITIDAS = ['Desayuno', 'Almuerzo', 'Cena', 'Postre', 'Colaci
 const TIPOS_DE_SERVICIO = ['Cafeteria', 'Eventos', 'Snacks'];
 
 const ingredienteSchema = new Schema({
-    ingredienteId: {
+    ingrediente: {
         type: Schema.Types.ObjectId,
-        ref: 'IngredienteAlmacen',
+        ref: 'Ingrediente',
         required: true
     },
     cantidadRequerida: {
@@ -27,7 +27,8 @@ const productoSchema = new Schema({
     },
     precio: {
         type: Number,
-        required: false
+        required: false,
+        default: 0
     },
     costoProduccion: {
         type: Number,
@@ -49,7 +50,7 @@ const productoSchema = new Schema({
         required: false
     }]
 }, {
-    timestamps: false,
+    timestamps: true,
     versionKey: false
 });
 

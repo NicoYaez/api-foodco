@@ -1,4 +1,5 @@
 const OrdenCompra = require('../models/ordenCompra');
+const Empleado = require('../models/empleado');
 
 async function verOrdenesCompra(req, res) {
     try {
@@ -97,29 +98,42 @@ async function actualizarEstadoOrden(req, res) {
         const { nuevoEstado, empleadoId } = req.body;
         const { ordenId } = req.params;
 
-        console.log(ordenId);
-
         // Verificar si la orden existe
         const orden = await OrdenCompra.findById(ordenId);
         if (!orden) {
             return res.status(404).json({ message: 'Orden no encontrada' });
         }
 
+        // Verificar si el empleado existe
+        const empleado = await Empleado.findById(empleadoId);
+        if (!empleado) {
+            return res.status(404).json({ message: 'Empleado no encontrado' });
+        }
+
         // Registrar el cambio de estado
         const cambioEstado = {
             estadoAnterior: orden.estado,
             estadoNuevo: nuevoEstado,
-            empleado: empleadoId,
+            empleado: empleado._id,
             fechaCambio: new Date()
         };
+
+        // Si es el primer cambio, asignar al empleado responsable
+        if (!orden.empleado) {
+            orden.empleado = empleado._id;
+        }
 
         // Actualizar el estado y guardar el historial de cambios
         orden.estado = nuevoEstado;
         orden.historialCambios.push(cambioEstado);
 
+        // Guardar la orden con los cambios
         await orden.save();
 
-        res.status(200).json(orden);
+        res.status(200).json({
+            message: 'Estado de la orden actualizado y asignado al empleado',
+            orden
+        });
     } catch (error) {
         console.error('Error al actualizar el estado de la orden:', error);
         res.status(500).json({ message: 'Error interno del servidor' });
