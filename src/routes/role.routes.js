@@ -3,7 +3,7 @@ const router = express.Router();
 const roleController = require("../controllers/role.controller");
 
 // Ruta para crear un rol
-router.post('/add', roleController.createRole);
+router.post('/new', roleController.createRole);
 
 // Ruta para obtener todos los roles
 router.get('/list', roleController.getRoles);

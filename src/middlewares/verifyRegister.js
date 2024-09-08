@@ -2,30 +2,32 @@ const Cliente = require('../models/cliente');
 const Empleado = require('../models/empleado');
 
 const checkRegisterUser = async (req, res, next) => {
-    const emailBody = req.body.email.toLowerCase();
+    try {
+        const emailBody = req.body.email.toLowerCase();
+        const { username } = req.body;
 
-    // Buscar el usuario en la colección de Clientes
-    let user = await Cliente.findById({ username: req.body.username });
+        // Buscar el usuario en la colección de Clientes o Empleados por username
+        let user = await Cliente.findOne({ username }) || await Empleado.findOne({ username });
 
-    // Si no es un Cliente, buscar en la colección de Empleados
-    if (!user) {
-        user = await Empleado.findById({ username: req.body.username });
+        if (user) {
+            return res.status(400).json({ message: "El nombre de usuario ya existe" });
+        }
+
+        // Buscar el usuario en la colección de Clientes o Empleados por email
+        let email = await Cliente.findOne({ email: emailBody }) || await Empleado.findOne({ email: emailBody });
+
+        if (email) {
+            return res.status(400).json({ message: "El email ya existe" });
+        }
+
+        // Si no se encuentra duplicado ni el username ni el email, pasar al siguiente middleware
+        next();
+    } catch (error) {
+        console.error('Error al verificar el registro del usuario:', error);
+        res.status(500).json({ message: 'Error interno del servidor' });
     }
-
-    if (user) return res.status(400).json({ message: "El usuario ya existe" })
-
-    // Buscar el usuario en la colección de Clientes
-    let email = await Cliente.findById({ email: emailBody });
-
-    // Si no es un Cliente, buscar en la colección de Empleados
-    if (!email) {
-        email = await Empleado.findById({ email: emailBody });
-    }
-
-    if (email) return res.status(400).json({ message: "El email ya existe" })
-
-    next();
 };
+
 module.exports = {
     checkRegisterUser
 };

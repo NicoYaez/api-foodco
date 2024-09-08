@@ -33,10 +33,9 @@ const clienteSchema = new Schema({
         required: false
     }
 },{
-    timestamps: false,
+    timestamps: true,
     versionKey: false,
 });
-
 
 clienteSchema.methods.encryptPassword = async password => {
     const salt = await bcrypt.genSaltSync(10);

@@ -35,23 +35,26 @@ async function crearSeleccionProductos(req, res) {
                 return res.status(404).json({ message: `Producto con id ${item.producto} no encontrado` });
             }
 
-            // Calcular el precio total de este producto
-            const subtotal = producto.precio * item.cantidad;
+            // Obtener el precio unitario del producto desde la base de datos
+            const precioUnitario = producto.precio;
+
+            // Calcular el precio total de este producto considerando la cantidad
+            const subtotal = precioUnitario * item.cantidad;
             precioTotal += subtotal;
 
+            // Agregar el producto con su precio unitario a la selección
             productosValidos.push({
                 producto: item.producto,
-                cantidad: item.cantidad
+                cantidad: item.cantidad,
+                precioUnitario: precioUnitario // Agregamos el precio unitario al objeto
             });
         }
-
-        precioTotal = precioTotal || 0;
 
         // Crear la selección de productos
         const nuevaSeleccion = new SeleccionProductos({
             productos: productosValidos,
             cliente: clienteId,
-            precio: precioTotal,
+            precio: precioTotal,  // Precio total de la selección de productos
             direccion,
             fechaRequerida
         });

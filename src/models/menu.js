@@ -36,6 +36,6 @@ const menuSchema = new mongoose.Schema({
         enum: ['Vegetariano', 'Vegano', 'Sin Gluten', 'Omnivoro'], // Define las opciones permitidas para la dieta
         message: '{VALUE} no es una dieta válida'
     }
-}, { timestamps: false, versionKey: false });
+}, { timestamps: true, versionKey: false });
 
 module.exports = mongoose.model('Menu', menuSchema);

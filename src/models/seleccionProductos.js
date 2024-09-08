@@ -12,6 +12,20 @@ const seleccionProductosSchema = new Schema({
         cantidad: {
             type: Number,
             required: true
+        },
+        precioUnitario: {
+            type: Number, // Precio unitario del producto
+            required: false,
+            default: 0
+        },
+        descuento: {
+            type: Number, // Descuento opcional en porcentaje
+            required: false,
+            default: 0
+        },
+        precioTotal: {
+            type: Number, // Precio final después del descuento
+            required: false
         }
     }],
     cliente: {
@@ -23,9 +37,14 @@ const seleccionProductosSchema = new Schema({
         type: String,
         required: true
     },
-    precio: {
-        type: Number,
+    precioTotalOrden: {
+        type: Number, // Precio total de la orden incluyendo todos los productos
         required: false
+    },
+    iva: {
+        type: Number,
+        required: false,
+        default: 0.19 // IVA del 19%
     },
     fechaRequerida: {
         type: Date,
@@ -41,6 +60,22 @@ const seleccionProductosSchema = new Schema({
     versionKey: false,
 });
 
+// Middleware para calcular el precio total de cada producto y el precio total de la orden
+seleccionProductosSchema.pre('save', function (next) {
+    this.productos.forEach(producto => {
+        // Calcular el precio total por producto, aplicando el descuento si existe
+        const descuento = producto.descuento || 0;
+        const precioConDescuento = producto.precioUnitario * (1 - (descuento / 100));
+        producto.precioTotal = precioConDescuento * producto.cantidad;
+    });
+
+    // Calcular el total de la orden sumando los precios de todos los productos
+    this.precioTotalOrden = this.productos.reduce((sum, producto) => sum + producto.precioTotal, 0);
+    
+    next();
+});
+
+// Middleware para validar la fecha requerida
 seleccionProductosSchema.post('save', async function (doc, next) {
     try {
         const fechaActual = new Date();
@@ -57,7 +92,10 @@ seleccionProductosSchema.post('save', async function (doc, next) {
             cliente: doc.cliente,
             seleccionProductos: doc._id,
             direccion: doc.direccion,
-            fechaRequerida: doc.fechaRequerida
+            fechaRequerida: doc.fechaRequerida,
+            precioTotalOrden: doc.precioTotalOrden, // Asignar el precio total de la selección de productos
+            iva: doc.precioTotalOrden * 0.19, // Calcular el IVA
+            precioFinalConIva: doc.precioTotalOrden + (doc.precioTotalOrden * 0.19) // Precio final incluyendo IVA
         });
 
         await nuevaOrden.save();

@@ -44,8 +44,6 @@ const obtenerAlmacenes = async (req, res) => {
     }
 };
 
-//ALMACEN
-
 // Crear un ingrediente en el almacén
 const agregarIngredienteAlmacen  = async (req, res) => {
     const { ingredienteId, almacenId, cantidad } = req.body;

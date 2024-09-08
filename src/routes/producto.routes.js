@@ -10,4 +10,8 @@ router.get('/list', productoController.mostrarProductos);
 
 router.get('/view/:id', productoController.verProductoPorId);
 
+router.put('/update/:id', productoController.actualizarProducto);
+
+router.delete('/delete/:id', productoController.eliminarProducto);
+
 module.exports = router;
