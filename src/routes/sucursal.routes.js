@@ -5,6 +5,11 @@ const sucursalController = require("../controllers/sucursal.controller");
 
 // Crear un nuevo producto
 router.post('/new', sucursalController.crearSucursal);
+
 router.get('/list', sucursalController.verSucursales);
+
+router.put('/update/:id', sucursalController.actualizarSucursal);
+
+router.delete('/delete/:id', sucursalController.eliminarSucursal);
 
 module.exports = router;

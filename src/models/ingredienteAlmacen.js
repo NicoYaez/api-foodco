@@ -17,6 +17,6 @@ const ingredienteAlmacenSchema = new Schema({
         type: Number,
         required: true
     }
-});
+}, { timestamps: true, versionKey: false });
 
 module.exports = model("IngredienteAlmacen", ingredienteAlmacenSchema);

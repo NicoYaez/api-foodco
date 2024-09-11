@@ -8,6 +8,8 @@ router.post('/new', ingredienteController.crearIngrediente);
 
 router.get('/list', ingredienteController.verIngredientes);
 
+router.get('/list/nombres', ingredienteController.verIngredientesNombres);
+
 router.get('/view/:id', ingredienteController.verIngredientePorId);
 
 router.put('/update/:id', ingredienteController.actualizarIngrediente);

@@ -24,6 +24,7 @@ const devRoutes = require('../src/routes/dev.routes.js');
 const tokenRoutes = require('../src/routes/token.routes');
 const departamentoRoutes = require('../src/routes/departamento.routes');
 const clienteRoutes = require('../src/routes/cliente.routes');
+const testRoutes = require('../src/routes/test_upload.routes');
 
 const app = express();
 app.set('PORT', process.env.PORT);
@@ -55,6 +56,7 @@ app.use("/api/v1/dev", devRoutes);
 app.use("/api/v1/verify", tokenRoutes);
 app.use("/api/v1/departamento", departamentoRoutes);
 app.use("/api/v1/cliente", clienteRoutes);
+app.use("/api/v1/test", testRoutes)
 
 //app.get('*', function(req, res){ res.status(404).json({message: 'ERROR 404'}) });
 
