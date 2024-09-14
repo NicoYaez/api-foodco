@@ -6,4 +6,6 @@ router.put('/update/:id', clienteController.actualizarCliente);
 
 router.delete('/delete/:id', clienteController.deleteCliente);
 
+router.get('/view/:id', clienteController.verClientePorId);
+
 module.exports = router;

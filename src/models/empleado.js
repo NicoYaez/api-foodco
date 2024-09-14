@@ -38,7 +38,9 @@ const empleadoSchema = new Schema({
         type: Schema.Types.ObjectId,
         ref: 'Sucursal',
         required: true
-    }
+    },
+    passwordResetToken: String,
+    passwordResetExpires: Date
 },{
     timestamps: true,
     versionKey: false,
