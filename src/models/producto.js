@@ -1,3 +1,5 @@
+const dotenv = require('dotenv');
+dotenv.config();
 const mongoose = require('mongoose');
 const { Schema, model } = mongoose;
 
@@ -55,7 +57,7 @@ const productoSchema = new Schema({
 });
 
 productoSchema.methods.setImagenes = function setImagenes(filenames) {
-    this.imagenes = filenames.map(filename => `${process.env.HOST}:${process.env.PORT}/public/images/${filename}`);
+    this.imagenes = filenames.map(filename => `${process.env.API_URL}/public/images/${filename}`);
 };
 
 module.exports = model("Producto", productoSchema);

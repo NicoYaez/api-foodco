@@ -13,6 +13,8 @@ const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const validator = require('validator'); // Necesitarás instalar validator con npm install validator
 
+const { sendPasswordResetEmail, sendRegister } = require('../services/email.service');
+
 const register = async (req, res) => {
     const { username, password, empresa, contacto, sucursal } = req.body;
     const email = req.body.email ? req.body.email.toLowerCase() : '';
@@ -100,6 +102,7 @@ const register = async (req, res) => {
 
         // Guardar cliente
         const userSave = await newClient.save();
+        await sendRegister(username, email, password); // Enviar correo electrónico
 
         // Generar token
         const { token, expiresIn } = generateToken({ id: userSave._id, type: 'Cliente' }, res);
@@ -143,7 +146,7 @@ const login = async (req, res) => {
         // Verificar la contraseña
         const matchPassword = await clienteFound.validatePassword(password, clienteFound.password);
         if (!matchPassword) {
-            return res.status(401).json({ token: null, message: "Contraseña incorrecta" });
+            return res.status(401).json({ message: "Contraseña incorrecta" });
         }
 
         // Generar el token de acceso
@@ -175,6 +178,31 @@ const verClientes = async (req, res) => {
         return res.status(500).json({ message: 'Error interno del servidor' });
     }
 };
+
+const verClientePorId = async (req, res) => {
+    try {
+        // Obtener el id del cliente desde los parámetros de la URL
+        const clienteId = req.params.id;
+
+        // Buscar el cliente en la base de datos por su id y realizar los populates necesarios
+        const cliente = await Cliente.findById(clienteId)
+            .populate('contacto')
+            .populate('empresa')
+            .populate('sucursal');
+
+        // Si el cliente no existe
+        if (!cliente) {
+            return res.status(404).json({ message: "Cliente no encontrado" });
+        }
+
+        // Retornar el cliente encontrado
+        return res.status(200).json(cliente);
+    } catch (error) {
+        console.error('Error al obtener el cliente por ID:', error);
+        return res.status(500).json({ message: 'Error interno del servidor' });
+    }
+};
+
 
 const actualizarCliente = async (req, res) => {
     const { id } = req.params;  // ID del cliente a actualizar
@@ -267,35 +295,138 @@ const actualizarCliente = async (req, res) => {
 };
 
 const deleteCliente = async (req, res) => {
-  try {
-    const { id } = req.params;
+    try {
+        const { id } = req.params;
 
-    // Buscar el cliente por su ID
-    const cliente = await Cliente.findById(id);
+        // Buscar el cliente por su ID
+        const cliente = await Cliente.findById(id);
 
-    if (!cliente) {
-      return res.status(404).json({ message: 'Cliente no encontrado' });
+        if (!cliente) {
+            return res.status(404).json({ message: 'Cliente no encontrado' });
+        }
+
+        // Eliminar contacto si existe
+        if (cliente.contacto) {
+            await Contacto.findByIdAndDelete(cliente.contacto);
+        }
+
+        // Eliminar empresa si existe
+        if (cliente.empresa) {
+            await Empresa.findByIdAndDelete(cliente.empresa);
+        }
+
+        // Eliminar el cliente
+        await Cliente.findByIdAndDelete(id);
+
+        // Responder con éxito
+        res.status(200).json({ message: 'Cliente, empresa y contacto eliminados exitosamente' });
+    } catch (error) {
+        console.error('Error al eliminar el cliente:', error);
+        res.status(500).json({ message: 'Error al eliminar el cliente', error: error.message });
+    }
+};
+
+const requestPasswordReset = async (req, res) => {
+    const { email } = req.body;
+    const clienteFound = await Cliente.findOne({ email });
+
+    if (!clienteFound) {
+        return res.status(404).json({ message: 'No user found with this email.' });
     }
 
-    // Eliminar contacto si existe
-    if (cliente.contacto) {
-      await Contacto.findByIdAndDelete(cliente.contacto);
+    // Generate reset token and set expiration
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const resetExpires = Date.now() + 3600000; // Token valid for 1 hour
+
+    clienteFound.passwordResetToken = resetToken;
+    clienteFound.passwordResetExpires = resetExpires;
+
+    await clienteFound.save();
+
+    // Send email to user with reset link
+    await sendPasswordResetEmail(clienteFound.email, resetToken);
+
+    res.status(200).json({ message: 'Password reset email sent.' });
+};
+
+const resetPassword = async (req, res) => {
+    const { token: { token: tokenString }, password } = req.body;
+
+    const user = await User.findOne({ passwordResetToken: tokenString, passwordResetExpires: { $gt: Date.now() } });
+
+    if (!user) {
+        return res.status(400).json({ message: 'Password reset token is invalid or has expired.' });
     }
 
-    // Eliminar empresa si existe
-    if (cliente.empresa) {
-      await Empresa.findByIdAndDelete(cliente.empresa);
+    // Hash new password and clear reset token fields
+    user.password = bcrypt.hashSync(password, 10);
+    user.passwordResetToken = undefined;
+    user.passwordResetExpires = undefined;
+
+    await user.save();
+
+    res.status(200).json({ message: 'Password has been reset. You can now log in with your new password.' });
+};
+
+const changePassword = async (req, res) => {
+    const { currentPassword, newPassword, confirmPassword } = req.body;
+    const token = req.headers['authorization'];
+
+    if (!token) {
+        return res.status(401).json({ auth: false, message: 'Token no proporcionado' });
+    }
+    const extractedToken = token.split(' ')[1];
+
+    if (!extractedToken) {
+        return res.status(401).json({ auth: false, message: 'Token no proporcionado' });
     }
 
-    // Eliminar el cliente
-    await Cliente.findByIdAndDelete(id);
+    if (!process.env.SECRET_API) {
+        return res.status(500).json({ message: "La clave secreta del API no está definida" });
+    }
 
-    // Responder con éxito
-    res.status(200).json({ message: 'Cliente, empresa y contacto eliminados exitosamente' });
-  } catch (error) {
-    console.error('Error al eliminar el cliente:', error);
-    res.status(500).json({ message: 'Error al eliminar el cliente', error: error.message });
-  }
+    let decoded;
+    try {
+        decoded = jwt.verify(extractedToken, process.env.SECRET_API);
+    } catch (err) {
+        return res.status(401).json({ auth: false, message: 'Token no es válido' });
+    }
+
+    const userId = decoded.id;
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
+        return res.status(400).json({ message: "Debe proporcionar la contraseña actual, la nueva contraseña y la confirmación de la nueva contraseña" });
+    }
+
+    if (newPassword !== confirmPassword) {
+        return res.status(400).json({ message: "La nueva contraseña y la confirmación de la nueva contraseña deben coincidir" });
+    }
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+        return res.status(404).json({ message: "Usuario no encontrado" });
+    }
+
+    const validPassword = await user.comparePassword(currentPassword);
+
+    //console.log(currentPassword)
+    //console.log(user.password);
+
+    if (!validPassword) {
+        return res.status(400).json({ message: "La contraseña actual es incorrecta" });
+    }
+
+    const samePassword = await user.comparePassword(newPassword);
+
+    if (samePassword) {
+        return res.status(400).json({ message: "La nueva contraseña no puede ser la misma que la actual" });
+    }
+
+    user.password = await user.encryptPassword(newPassword);
+    await user.save();
+
+    return res.status(200).json({ message: "Contraseña actualizada con éxito" });
 };
 
 module.exports = {
@@ -303,5 +434,7 @@ module.exports = {
     login,
     verClientes,
     actualizarCliente,
-    deleteCliente
+    deleteCliente,
+    requestPasswordReset,
+    verClientePorId
 };

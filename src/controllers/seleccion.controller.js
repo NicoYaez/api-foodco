@@ -4,9 +4,9 @@ const Cliente = require('../models/cliente');
 
 async function crearSeleccionProductos(req, res) {
     try {
-        const { productos, clienteId, direccion, fechaRequerida } = req.body;
+        const { productos, clienteId, direccion, ciudad, pais, fechaRequerida } = req.body;
 
-        if (!productos || !clienteId || !fechaRequerida || !direccion) {
+        if (!productos || !clienteId || !fechaRequerida || !direccion || !ciudad || !pais) {
             return res.status(400).json({ message: 'Faltan campos obligatorios' });
         }
 
@@ -50,12 +50,14 @@ async function crearSeleccionProductos(req, res) {
             });
         }
 
-        // Crear la selección de productos
+        // Crear la selección de productos con los nuevos campos
         const nuevaSeleccion = new SeleccionProductos({
             productos: productosValidos,
             cliente: clienteId,
             precio: precioTotal,  // Precio total de la selección de productos
             direccion,
+            ciudad,
+            pais,
             fechaRequerida
         });
 

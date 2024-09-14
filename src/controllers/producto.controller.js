@@ -19,28 +19,20 @@ async function crearProducto(req, res) {
     try {
         let costoProduccionTotal = 0;
 
-        // Iterar sobre los ingredientes proporcionados
+        // Iterar sobre los ingredientes proporcionados para calcular el costo de producción
         for (const ingredienteInfo of ingredientes) {
             const { ingrediente, cantidadRequerida } = ingredienteInfo;
 
-            // Buscar el IngredienteAlmacen que tiene el ingrediente con el ID proporcionado
-            const ingredienteAlmacen = await IngredienteAlmacen.findOne({ ingrediente }).populate('ingrediente');
+            // Buscar el ingrediente para obtener su precio
+            const ingredienteData = await Ingrediente.findById(ingrediente);
 
-            if (!ingredienteAlmacen) {
-                return res.status(404).json({ message: `El ingrediente con id ${ingrediente} no se encuentra en el almacén` });
-            }
-
-            // Verificar si hay suficiente cantidad en el almacén
-            if (ingredienteAlmacen.cantidad < cantidadRequerida) {
-                return res.status(400).json({ message: `No hay suficiente cantidad del ingrediente ${ingredienteAlmacen.ingrediente.nombre} en el almacén` });
+            if (!ingredienteData) {
+                return res.status(404).json({ message: `El ingrediente con id ${ingrediente} no se encuentra` });
             }
 
             // Calcular el costo de producción para este ingrediente
-            const costoPorIngrediente = ingredienteAlmacen.ingrediente.precio * cantidadRequerida;
+            const costoPorIngrediente = ingredienteData.precio * cantidadRequerida;
             costoProduccionTotal += costoPorIngrediente;
-
-            // Actualizar la cantidad del ingrediente en el almacén
-            await ingredienteAlmacen.save();
         }
 
         // Crear el nuevo producto
@@ -75,7 +67,7 @@ async function crearProducto(req, res) {
 
 const mostrarProductos = async (req, res) => {
     try {
-        const productos = await Producto.find()
+        const productos = await Producto.find().populate('ingredientes.ingrediente');
 
         // Verificar si hay productos
         if (productos.length === 0) {
@@ -83,6 +75,27 @@ const mostrarProductos = async (req, res) => {
         }
 
         // Devolver los productos encontrados
+        return res.status(200).json({ productos });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            message: 'Error al obtener los productos',
+            error: error.message
+        });
+    }
+};
+
+const mostrarProductosNombres = async (req, res) => {
+    try {
+        // Buscar productos en orden alfabético y devolver solo los campos nombre e _id
+        const productos = await Producto.find({}, 'nombre _id').sort({ nombre: 1 });
+
+        // Verificar si hay productos
+        if (productos.length === 0) {
+            return res.status(404).json({ message: 'No se encontraron productos' });
+        }
+
+        // Devolver solo el nombre e id de los productos encontrados
         return res.status(200).json({ productos });
     } catch (error) {
         console.error(error);
@@ -207,7 +220,8 @@ module.exports = {
     mostrarProductos,
     verProductoPorId,
     actualizarProducto,
-    eliminarProducto
+    eliminarProducto,
+    mostrarProductosNombres
 };
 
 /*

@@ -10,6 +10,10 @@ router.get('/list', almacenController.obtenerAlmacenes);
 
 router.get('/list-ingredientes', almacenController.obtenerIngredientesAlmacen);
 
-router.put('/update', almacenController.actualizarIngredienteAlmacen);
+//router.put('/update', almacenController.actualizarIngredienteAlmacen);
+
+router.put('/update/:id', almacenController.actualizarAlmacen);
+
+router.delete('/delete/:id', almacenController.eliminarAlmacen);
 
 module.exports = router;

@@ -19,7 +19,7 @@ router.post('/login/empleado', authEmpleado.login);
 
 router.put('/update/cliente/:id', authCliente.actualizarCliente);
 
-//router.post('/request-password-reset', authController.requestPasswordReset);
+router.post('/cliente/request-password-reset', authCliente.requestPasswordReset);
 
 //router.post('/reset-password', authController.resetPassword);
 

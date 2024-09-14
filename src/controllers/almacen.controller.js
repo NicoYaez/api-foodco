@@ -31,6 +31,70 @@ const crearAlmacen = async (req, res) => {
     }
 };
 
+const actualizarAlmacen = async (req, res) => {
+    try {
+        const { codigoAlmacen, capacidad, direccion, sucursal } = req.body;
+
+        // Verificar si se envió un ID de almacén para actualizar
+        const { id } = req.params;
+        if (!id) {
+            return res.status(400).json({ message: 'Se requiere el ID del almacén' });
+        }
+
+        // Crear un objeto vacío y añadir solo los campos que se enviaron en la solicitud
+        const camposAActualizar = {};
+        if (codigoAlmacen) camposAActualizar.codigoAlmacen = codigoAlmacen;
+        if (capacidad) camposAActualizar.capacidad = capacidad;
+        if (direccion) camposAActualizar.direccion = direccion;
+        if (sucursal) camposAActualizar.sucursal = sucursal;
+
+        // Verificar si se envió algún campo para actualizar
+        if (Object.keys(camposAActualizar).length === 0) {
+            return res.status(400).json({ message: 'No se enviaron campos para actualizar' });
+        }
+
+        // Actualizar el almacén en la base de datos
+        const almacenActualizado = await Almacen.findByIdAndUpdate(id, camposAActualizar, { new: true });
+
+        // Verificar si el almacén existe
+        if (!almacenActualizado) {
+            return res.status(404).json({ message: 'Almacén no encontrado' });
+        }
+
+        // Enviar respuesta exitosa
+        return res.status(200).json(almacenActualizado);
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: 'Error al actualizar el almacén' });
+    }
+};
+
+const eliminarAlmacen = async (req, res) => {
+    try {
+        // Obtener el ID de los parámetros de la ruta
+        const { id } = req.params;
+
+        // Verificar si se envió el ID
+        if (!id) {
+            return res.status(400).json({ message: 'Se requiere el ID del almacén' });
+        }
+
+        // Intentar eliminar el almacén de la base de datos
+        const almacenEliminado = await Almacen.findByIdAndDelete(id);
+
+        // Verificar si el almacén fue encontrado y eliminado
+        if (!almacenEliminado) {
+            return res.status(404).json({ message: 'Almacén no encontrado' });
+        }
+
+        // Respuesta exitosa
+        return res.status(200).json({ message: 'Almacén eliminado correctamente', almacenEliminado });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: 'Error al eliminar el almacén' });
+    }
+};
+
 const obtenerAlmacenes = async (req, res) => {
     try {
         const almacenes = await Almacen.find()
@@ -164,5 +228,7 @@ module.exports = {
     obtenerAlmacenes,
     agregarIngredienteAlmacen ,
     obtenerIngredientesAlmacen ,
-    actualizarIngredienteAlmacen
+    actualizarIngredienteAlmacen,
+    actualizarAlmacen,
+    eliminarAlmacen
 };

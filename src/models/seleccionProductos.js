@@ -37,6 +37,14 @@ const seleccionProductosSchema = new Schema({
         type: String,
         required: true
     },
+    ciudad: {
+        type: String,
+        required: true
+    },
+    pais: {
+        type: String,
+        required: true
+    },
     precioTotalOrden: {
         type: Number, // Precio total de la orden incluyendo todos los productos
         required: false

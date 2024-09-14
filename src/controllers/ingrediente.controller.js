@@ -7,6 +7,12 @@ const crearIngrediente = async (req, res) => {
     const { codigoIngrediente, nombre, precio, almacenId, medida, cantidad } = req.body;
 
     try {
+        // Verificar si ya existe un ingrediente con el mismo codigoIngrediente
+        const ingredienteExistente = await Ingrediente.findOne({ codigoIngrediente });
+        if (ingredienteExistente) {
+            return res.status(400).json({ message: 'El código de ingrediente ya existe. Debe ser único.' });
+        }
+
         // Verificar si el almacén existe
         const almacen = await Almacen.findById(almacenId);
         if (!almacen) {
@@ -59,6 +65,24 @@ const verIngredientes = async (req, res) => {
         // Obtener todos los ingredientes de la base de datos, incluyendo los detalles del almacén
         const ingredientes = await Ingrediente.find()
             .populate('almacen');  // Popula los detalles del almacén asociado al ingrediente
+
+        // Verificar si no se encontraron ingredientes
+        if (ingredientes.length === 0) {
+            return res.status(404).json({ message: "No hay ingredientes registrados" });
+        }
+
+        // Enviar los ingredientes obtenidos en la respuesta
+        return res.status(200).json(ingredientes);
+    } catch (error) {
+        console.error('Error al obtener los ingredientes:', error);
+        return res.status(500).json({ message: 'Error interno del servidor' });
+    }
+};
+
+const verIngredientesNombres = async (req, res) => {
+    try {
+        // Obtener los ingredientes en orden alfabético por nombre
+        const ingredientes = await Ingrediente.find({}, 'nombre _id').sort({ nombre: 1 });
 
         // Verificar si no se encontraron ingredientes
         if (ingredientes.length === 0) {
@@ -188,5 +212,6 @@ module.exports = {
     verIngredientes,
     verIngredientePorId,
     actualizarIngrediente,
-    eliminarIngrediente
+    eliminarIngrediente,
+    verIngredientesNombres
 };
