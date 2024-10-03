@@ -12,16 +12,14 @@ const transporter = nodemailer.createTransport({
 });
 
 // Función para enviar el correo de restablecimiento de contraseña
-const sendPasswordResetEmail = async (email, token) => {
-    const resetLink = `http://localhost:4200/reset-password/${token}`; // Actualiza con el enlace real
-
+const sendPasswordResetEmail = async (email, resetCode) => {
     const mailOptions = {
         from: process.env.EMAIL_FROM,
         to: email,
         subject: 'Solicitud de restablecimiento de contraseña | Foodco',
         text: `Está recibiendo esto porque usted (u otra persona) ha solicitado el restablecimiento de la contraseña de su cuenta.
-            Haga clic en el siguiente enlace o péguelo en su navegador para completar el proceso dentro de una hora de haberlo recibido:
-            ${resetLink}
+            Utilice el siguiente código para completar el proceso dentro de una hora de haberlo recibido:
+            ${resetCode}
             Si no lo solicitó, ignore este correo electrónico y su contraseña permanecerá sin cambios.`,
         html: `
         <!DOCTYPE html>
@@ -41,15 +39,19 @@ const sendPasswordResetEmail = async (email, token) => {
                     max-width: 600px;
                     margin: 0 auto;
                     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+                    text-align: center;
                 }
-                .button {
-                    display: inline-block;
-                    background-color: #28a745;
-                    color: #ffffff;
-                    padding: 15px 25px;
-                    text-decoration: none;
+                .code-box {
+                    background-color: #f4f4f4;
+                    color: #333333;
+                    font-size: 24px;
+                    letter-spacing: 5px;
+                    padding: 15px;
+                    margin: 20px auto;
                     border-radius: 5px;
-                    margin-top: 20px;
+                    border: 1px solid #cccccc;
+                    display: inline-block;
+                    width: 200px;
                 }
                 .footer {
                     margin-top: 20px;
@@ -61,11 +63,9 @@ const sendPasswordResetEmail = async (email, token) => {
         <body>
             <div class="container">
                 <p>Está recibiendo esto porque usted (u otra persona) ha solicitado el restablecimiento de la contraseña de su cuenta.</p>
-                <p>Haga clic en el siguiente botón para completar el proceso dentro de una hora de haberlo recibido:</p>
-                <a class="button" href="${resetLink}">Restablecer la contraseña</a>
+                <p>Utilice el siguiente código para completar el proceso dentro de una hora de haberlo recibido:</p>
+                <div class="code-box">${resetCode}</div>
                 <p>Si no lo solicitó, ignore este correo electrónico y su contraseña permanecerá sin cambios.</p>
-                <p>Si tiene problemas para hacer clic en el botón, copie y pegue la siguiente URL en su navegador:</p>
-                <p>${resetLink}</p>
                 <div class="footer">Este es un correo automático, por favor no responda.</div>
             </div>
         </body>
@@ -80,6 +80,69 @@ const sendPasswordResetEmail = async (email, token) => {
         console.error('Error al enviar el correo de restablecimiento:', error);
     }
 };
+
+const sendPasswordChangeConfirmationEmail = async (email) => {
+    const mailOptions = {
+        from: process.env.EMAIL_FROM,
+        to: email,
+        subject: 'Confirmación de cambio de contraseña | Foodco',
+        text: `Hola,
+
+        Esta es una confirmación de que la contraseña de tu cuenta ha sido cambiada exitosamente.
+
+        Si no solicitaste este cambio, por favor contacta a nuestro equipo de soporte inmediatamente.
+
+        Gracias,
+        El equipo de Foodco`,
+        html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    background-color: #f4f4f4;
+                    margin: 0;
+                    padding: 20px;
+                }
+                .container {
+                    background-color: #ffffff;
+                    padding: 20px;
+                    border-radius: 8px;
+                    max-width: 600px;
+                    margin: 0 auto;
+                    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+                }
+                .footer {
+                    margin-top: 20px;
+                    font-size: 12px;
+                    color: #888888;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <h2>Tu contraseña ha sido cambiada</h2>
+                <p>Hola,</p>
+                <p>Esta es una confirmación de que la contraseña de tu cuenta ha sido cambiada exitosamente.</p>
+                <p>Si no solicitaste este cambio, por favor contacta a nuestro equipo de soporte inmediatamente.</p>
+                <div class="footer">
+                    <p>Gracias,<br>El equipo de Foodco</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        `
+    };
+
+    try {
+        await transporter.sendMail(mailOptions);
+        console.log('Correo de confirmación de cambio de contraseña enviado correctamente');
+    } catch (error) {
+        console.error('Error al enviar el correo de confirmación:', error);
+    }
+};
+
 
 // Función para enviar el correo de bienvenida
 const sendRegister = async (username, email, password) => {
@@ -154,5 +217,6 @@ Contraseña: ${password}`,
 
 module.exports = {
     sendPasswordResetEmail,
-    sendRegister
+    sendRegister,
+    sendPasswordChangeConfirmationEmail
 };
