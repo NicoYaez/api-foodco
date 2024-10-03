@@ -32,7 +32,7 @@ const clienteSchema = new Schema({
         ref: 'Sucursal',
         required: false
     },
-    passwordResetToken: String,
+    passwordResetCode: String,
     passwordResetExpires: Date
 },{
     timestamps: true,

@@ -13,7 +13,7 @@ const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const validator = require('validator'); // Necesitarás instalar validator con npm install validator
 
-const { sendPasswordResetEmail, sendRegister } = require('../services/email.service');
+const { sendPasswordResetEmail, sendRegister, sendPasswordChangeConfirmationEmail } = require('../services/email.service');
 
 const register = async (req, res) => {
     const { username, password, empresa, contacto, sucursal } = req.body;
@@ -326,46 +326,90 @@ const deleteCliente = async (req, res) => {
     }
 };
 
+const generateResetCode = () => {
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let code = '';
+    for (let i = 0; i < 6; i++) {
+        const randomIndex = Math.floor(Math.random() * characters.length);
+        code += characters[randomIndex];
+    }
+    return code;
+};
+
 const requestPasswordReset = async (req, res) => {
     const { email } = req.body;
     const clienteFound = await Cliente.findOne({ email });
 
-    if (!clienteFound) {
-        return res.status(404).json({ message: 'No user found with this email.' });
+    if (!email) {
+        return res.status(400).json({ message: 'Debe proporcionar un correo electrónico.' });
     }
 
-    // Generate reset token and set expiration
-    const resetToken = crypto.randomBytes(32).toString('hex');
-    const resetExpires = Date.now() + 3600000; // Token valid for 1 hour
+    if (!clienteFound) {
+        return res.status(404).json({ message: 'No se ha encontrado ningún usuario con este correo electrónico.' });
+    }
 
-    clienteFound.passwordResetToken = resetToken;
+    // Generate 6-character alphanumeric reset code and set expiration
+    const resetCode = generateResetCode();
+    const resetExpires = Date.now() + 3600000; // Code valid for 1 hour
+
+    clienteFound.passwordResetCode = resetCode;
     clienteFound.passwordResetExpires = resetExpires;
 
     await clienteFound.save();
 
-    // Send email to user with reset link
-    await sendPasswordResetEmail(clienteFound.email, resetToken);
+    // Send email to user with the reset code
+    await sendPasswordResetEmail(clienteFound.email, resetCode);
 
-    res.status(200).json({ message: 'Password reset email sent.' });
+    res.status(200).json({ message: 'Código de restablecimiento de contraseña enviado.' });
 };
 
 const resetPassword = async (req, res) => {
-    const { token: { token: tokenString }, password } = req.body;
+    const { email, resetCode, newPassword } = req.body;
+    const clienteFound = await Cliente.findOne({ email });
 
-    const user = await User.findOne({ passwordResetToken: tokenString, passwordResetExpires: { $gt: Date.now() } });
-
-    if (!user) {
-        return res.status(400).json({ message: 'Password reset token is invalid or has expired.' });
+    if (!email) {
+        return res.status(400).json({ message: 'Debe proporcionar el correo electrónico' });
     }
 
-    // Hash new password and clear reset token fields
-    user.password = bcrypt.hashSync(password, 10);
-    user.passwordResetToken = undefined;
-    user.passwordResetExpires = undefined;
+    if(!resetCode) {
+        return res.status(400).json({ message: 'Debe proporcionar el código de restablecimiento' });
+    }
 
-    await user.save();
+    if (!newPassword) {
+        return res.status(400).json({ message: 'Debe proporcionar la nueva contraseña' });
+    }
 
-    res.status(200).json({ message: 'Password has been reset. You can now log in with your new password.' });
+    if (!clienteFound) {
+        return res.status(404).json({ message: 'No se ha encontrado ningún usuario con este correo electrónico.' });
+    }
+
+    // Verificar que el código de restablecimiento coincide y no ha expirado
+    if (clienteFound.passwordResetCode !== resetCode || clienteFound.passwordResetExpires < Date.now()) {
+        return res.status(400).json({ message: 'Código de restablecimiento inválido o expirado.' });
+    }
+
+    // Verificar que la nueva contraseña tenga al menos 6 caracteres
+    if (newPassword.length < 6) {
+        return res.status(400).json({ message: 'La nueva contraseña debe tener al menos 6 caracteres.' });
+    }
+
+    // Verificar que la nueva contraseña no sea igual a la actual
+    const isSamePassword = await bcrypt.compare(newPassword, clienteFound.password);
+    if (isSamePassword) {
+        return res.status(400).json({ message: 'La nueva contraseña no puede ser igual a la contraseña actual.' });
+    }
+
+    // Actualizar la contraseña con la nueva
+    clienteFound.password = await bcrypt.hash(newPassword, 10);
+    clienteFound.passwordResetCode = undefined;
+    clienteFound.passwordResetExpires = undefined;
+
+    await clienteFound.save();
+
+    // Enviar correo de confirmación de cambio de contraseña
+    await sendPasswordChangeConfirmationEmail(clienteFound.email);
+
+    res.status(200).json({ message: 'Contraseña restablecida con éxito.' });
 };
 
 const changePassword = async (req, res) => {
@@ -436,5 +480,6 @@ module.exports = {
     actualizarCliente,
     deleteCliente,
     requestPasswordReset,
-    verClientePorId
+    verClientePorId,
+    resetPassword
 };

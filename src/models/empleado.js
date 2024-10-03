@@ -40,7 +40,11 @@ const empleadoSchema = new Schema({
         required: true
     },
     passwordResetToken: String,
-    passwordResetExpires: Date
+    passwordResetExpires: Date,
+    imagenPerfil: {
+        type: String,
+        required: false
+    }
 },{
     timestamps: true,
     versionKey: false,
@@ -57,6 +61,10 @@ empleadoSchema.methods.validatePassword = async function (password, receivedPass
 
 empleadoSchema.methods.comparePassword = async function (password) {
     return await bcrypt.compare(password, this.password);
+};
+
+empleadoSchema.methods.setImagenPerfil = function setImagenPerfil(filename) {
+    this.imagenPerfil = `${process.env.API_URL}/public/images/profile/${filename}`;
 };
 
 module.exports = model("Empleado", empleadoSchema);

@@ -49,7 +49,7 @@ const login = async (req, res) => {
 
 const register = async (req, res) => {
   try {
-    const { username, password, rut, nombre, departamento, role, sucursal } = req.body;
+    const { username, password, rut, nombre, departamento, role, sucursal, imagenPerfil } = req.body;
     const email = req.body.email ? req.body.email.toLowerCase() : '';
 
     // Validar que todos los campos obligatorios estén presentes
@@ -96,6 +96,10 @@ const register = async (req, res) => {
     // Encriptar la contraseña antes de guardar
     nuevoEmpleado.password = await nuevoEmpleado.encryptPassword(password);
 
+    if (req.file) {
+      nuevoEmpleado.setImagenPerfil(req.file.filename);
+    };
+    
     // Guardar el empleado en la base de datos
     let empleadoSave = await nuevoEmpleado.save();
 
