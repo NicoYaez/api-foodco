@@ -147,8 +147,6 @@ const uploadAndResizeProfileImage = (req, res, next) => {
   });
 };
 
-
-
 module.exports = {
   uploadAndConvertToWebP,
   uploadAndResizeProfileImage

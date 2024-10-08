@@ -5,18 +5,24 @@ const Cliente = require('../models/cliente');
 const Empleado = require('../models/empleado');
 
 const verificateToken = async (req, res, next) => {
-
   try {
+    const authorizationHeader = req.headers['authorization'];
 
-    const token = req.headers['authorization'];
-
-    if (!token) {
-      return res.status(401).json({ auth: false, Message: "Token no proporcionado" })
+    // Verificar si el token está presente
+    if (!authorizationHeader) {
+      return res.status(401).json({ auth: false, message: "Token no proporcionado" });
     }
 
-    const extractedToken = token.split(' ')[1];
+    // Validar si el token tiene el formato correcto "Bearer <token>"
+    const tokenParts = authorizationHeader.split(' ');
+    if (tokenParts[0] !== 'Bearer' || tokenParts.length !== 2) {
+      return res.status(400).json({ auth: false, message: "Formato de token incorrecto" });
+    }
 
-    const decoded = jwt.verify(extractedToken, process.env.SECRET_API);
+    const token = tokenParts[1];
+
+    // Verificar el token usando el secreto de tu API
+    const decoded = jwt.verify(token, process.env.SECRET_API);
     const userId = decoded.id;
 
     // Buscar el usuario en la colección de Clientes
@@ -32,13 +38,15 @@ const verificateToken = async (req, res, next) => {
       return res.status(404).json({ auth: false, message: "Usuario no encontrado" });
     }
 
+    // Añadir el usuario al request para usarlo en rutas posteriores
+    req.user = user;
+
+    // Pasar al siguiente middleware
     next();
 
   } catch (error) {
-    //console.log(error)
-    return res.status(401).json({ auth: false, Message: "Token no valido" })
+    return res.status(401).json({ auth: false, message: "Token no válido", error: error.message });
   }
-
 };
 
 module.exports = { verificateToken };

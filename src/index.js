@@ -28,14 +28,14 @@ const testRoutes = require('../src/routes/test_upload.routes');
 
 const app = express();
 app.set('PORT', process.env.PORT);
-app.use(express.json());
 
 app.use(cookieParser());
 app.use(morgan('dev'));
 
 app.use(cors());
 
-app.use(express.urlencoded({ extended: false }));
+app.use(express.json()); // Para datos en JSON
+app.use(express.urlencoded({ extended: true })); // Para datos tipo formulario
 
 app.get('/', (req, res) => {
     res.send('¡Bienvenido a la API!<br>https://nicoyaez.notion.site/Foodco-API-5e33eef09a3f460997403ef67933a478'); // Salto de línea en HTML

@@ -52,6 +52,8 @@ const register = async (req, res) => {
     const { username, password, rut, nombre, departamento, role, sucursal, imagenPerfil } = req.body;
     const email = req.body.email ? req.body.email.toLowerCase() : '';
 
+    console.log('Datos recibidos:', req.body);
+
     // Validar que todos los campos obligatorios estén presentes
     if (!username || !password || !email || !rut || !nombre || !departamento || !role) {
       return res.status(400).json({ message: "Todos los campos obligatorios deben ser completados" });

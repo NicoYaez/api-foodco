@@ -4,22 +4,44 @@ const Empleado = require('../models/empleado');
 async function verOrdenesCompra(req, res) {
     try {
         const ordenes = await OrdenCompra.find()
-            .populate('cliente')
-            .populate('empleado')
             .populate({
-                path: 'seleccionProductos',
+                path: 'cliente',  // Populamos el campo cliente
+                populate: [
+                    {
+                        path: 'empresa',  // Populamos la referencia a Empresa dentro de Cliente
+                        model: 'Empresa',
+                        populate: {
+                            path: 'rubro',  // Populamos la referencia a Rubro dentro de Empresa
+                            model: 'Rubro',  // Asegúrate de que 'Rubro' es el nombre correcto del modelo
+                            select: 'nombre'  // Seleccionamos solo el nombre de Rubro
+                        }
+                    },
+                    {
+                        path: 'sucursal',  // Populamos la referencia a Sucursal dentro de Cliente
+                        model: 'Sucursal'  // Asegúrate de que 'Sucursal' es el nombre correcto de tu modelo
+                    },
+                    {
+                        path: 'contacto',  // Populamos la referencia a Contacto dentro de Cliente
+                        model: 'Contacto'  // Asegúrate de que 'Contacto' es el nombre correcto de tu modelo
+                    }
+                ]
+            })
+            .populate('empleado')  // Populamos el empleado relacionado
+            .populate({
+                path: 'seleccionProductos',  // Populamos la selección de productos
                 populate: {
                     path: 'productos.producto',  // Aquí se hace el populate de los productos dentro de seleccionProductos
-                    model: 'Producto'  // Asegúrate de que 'Producto' es el nombre del modelo de productos
+                    model: 'Producto'  // Asegúrate de que 'Producto' es el nombre correcto de tu modelo
                 }
             })
             .populate({
                 path: 'seleccionProductos',
                 populate: {
-                    path: 'productos.producto.ingrediente',  // Aquí se hace el populate de los productos dentro de seleccionProductos
-                    model: 'Producto'  // Asegúrate de que 'Producto' es el nombre del modelo de productos
+                    path: 'productos.producto.ingrediente',  // Populamos el ingrediente dentro de cada producto
+                    model: 'Ingrediente'  // Asegúrate de que 'Ingrediente' es el nombre correcto de tu modelo
                 }
             });
+
         res.status(200).json(ordenes);
     } catch (error) {
         console.error('Error al obtener las órdenes de compra:', error);
@@ -63,20 +85,42 @@ const verOrdenCompraPorId = async (req, res) => {
 
         // Buscar la orden de compra por su ID
         const orden = await OrdenCompra.findById(id)
-            .populate('cliente')
-            .populate('empleado')
             .populate({
-                path: 'seleccionProductos',
+                path: 'cliente',  // Populamos el campo cliente
+                populate: [
+                    {
+                        path: 'empresa',  // Populamos la referencia a Empresa dentro de Cliente
+                        model: 'Empresa',
+                        populate: {
+                            path: 'rubro',  // Populamos la referencia a Rubro dentro de Empresa
+                            model: 'Rubro',  // Asegúrate de que 'Rubro' es el nombre correcto del modelo
+                            select: 'nombre'  // Seleccionamos solo el nombre del Rubro
+                        }
+                    },
+                    {
+                        path: 'sucursal',  // Populamos la referencia a Sucursal dentro de Cliente
+                        model: 'Sucursal'
+                    },
+                    {
+                        path: 'contacto',  // Populamos la referencia a Contacto dentro de Cliente
+                        model: 'Contacto'
+                    }
+                ]
+            })
+            .populate('empleado')  // Populamos el empleado relacionado
+            .populate({
+                path: 'seleccionProductos',  // Populamos la selección de productos
                 populate: {
-                    path: 'productos.producto',  // Popula los productos dentro de seleccionProductos
+                    path: 'productos.producto',  // Populamos los productos dentro de seleccionProductos
                     model: 'Producto'
                 }
             })
             .populate({
                 path: 'seleccionProductos',
                 populate: {
-                    path: 'productos.producto.ingrediente',  // Popula los ingredientes dentro de los productos
-                    model: 'IngredienteAlmacen'
+                    path: 'productos.producto.ingredientes.ingrediente',  // Populamos los ingredientes dentro de los productos
+                    model: 'Ingrediente',  // Asegúrate de que 'Ingrediente' es el nombre correcto del modelo
+                    select: 'nombre descripcion'  // Seleccionamos campos específicos, como el nombre y la descripción
                 }
             });
 
