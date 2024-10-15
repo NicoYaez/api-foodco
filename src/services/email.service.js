@@ -143,8 +143,6 @@ const sendPasswordChangeConfirmationEmail = async (email) => {
     }
 };
 
-
-// Función para enviar el correo de bienvenida
 const sendRegister = async (username, email, password) => {
     const mailOptions = {
         from: process.env.EMAIL_FROM,

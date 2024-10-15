@@ -6,6 +6,8 @@ const checkRegisterUser = async (req, res, next) => {
         const emailBody = req.body.email.toLowerCase();
         const { username } = req.body;
 
+        console.log(req.body.email);
+
         // Buscar el usuario en la colección de Clientes o Empleados por username
         let user = await Cliente.findOne({ username }) || await Empleado.findOne({ username });
 

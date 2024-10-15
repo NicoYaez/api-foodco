@@ -3,6 +3,7 @@ const Producto = require('../models/producto');
 const Ingrediente = require('../models/ingrediente');
 const IngredienteAlmacen = require('../models/ingredienteAlmacen');
 const Almacen = require('../models/almacen');
+const MateriaPrima = require('../models/materiaPrima');
 
 async function crearProducto(req, res) {
     const { nombre, descripcion, ingredientes, categoria, tipoDeServicio, precio, imagenes = [] } = req.body;
@@ -24,7 +25,7 @@ async function crearProducto(req, res) {
             const { ingrediente, cantidadRequerida } = ingredienteInfo;
 
             // Buscar el ingrediente para obtener su precio
-            const ingredienteData = await Ingrediente.findById(ingrediente);
+            const ingredienteData = await MateriaPrima.findById(ingrediente);
 
             if (!ingredienteData) {
                 return res.status(404).json({ message: `El ingrediente con id ${ingrediente} no se encuentra` });

@@ -206,7 +206,6 @@ const eliminarIngrediente = async (req, res) => {
     }
 };
 
-
 module.exports = {
     crearIngrediente,
     verIngredientes,

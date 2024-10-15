@@ -20,7 +20,7 @@ const ordenCompraSchema = new Schema({
     },
     estado: {
         type: String,
-        enum: ['pendiente', 'aprobado', 'rechazado', 'en_produccion', 'despachado', 'entregado'],
+        enum: ['pendiente', 'aprobado', 'rechazado', 'en_produccion', 'despachado', 'entregado', 'completado'],
         default: 'pendiente',
         required: true
     },
@@ -78,7 +78,6 @@ ordenCompraSchema.pre('validate', async function (next) {
             const lastOrder = await model('OrdenCompra').findOne().sort({ numero: -1 });
             orden.numero = lastOrder ? lastOrder.numero + 1 : 1;
 
-            console.log('Número de orden asignado:', orden.numero);
             next();
         } catch (error) {
             next(error);
@@ -105,6 +104,37 @@ ordenCompraSchema.pre('save', async function (next) {
     // Calcular el IVA y el precio final
     orden.iva = orden.precioTotalOrden * 0.19;
     orden.precioFinalConIva = orden.precioTotalOrden + orden.iva;
+
+    next();
+});
+
+ordenCompraSchema.pre('save', async function (next) {
+    const orden = this;
+
+    // Asignar automáticamente un empleado con el rol "Ejecutivo de Ventas" si no está asignado
+    if (!orden.empleado) {
+        try {
+            // Buscar el rol de "Ejecutivo de Ventas" en la colección Role
+            const rolEjecutivoVentas = await model('Role').findOne({ nombre: 'Ejecutivo de Ventas' });
+
+            if (!rolEjecutivoVentas) {
+                return next(new Error('No se encontró el rol de Ejecutivo de Ventas.'));
+            }
+
+            // Buscar un empleado que tenga asignado ese rol
+            const empleado = await model('Empleado').findOne({ role: rolEjecutivoVentas._id });
+
+            if (!empleado) {
+                return next(new Error('No hay empleados disponibles con el rol de Ejecutivo de Ventas.'));
+            }
+
+            // Asignar el empleado encontrado a la orden
+            orden.empleado = empleado._id;
+            console.log(`Empleado asignado automáticamente: ${empleado.nombre}`);
+        } catch (error) {
+            return next(error);
+        }
+    }
 
     next();
 });
@@ -136,5 +166,6 @@ ordenCompraSchema.pre('findOneAndUpdate', async function (next) {
 
     next();
 });
+
 
 module.exports = model('OrdenCompra', ordenCompraSchema);
