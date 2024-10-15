@@ -9,7 +9,7 @@ const TIPOS_DE_SERVICIO = ['Cafeteria', 'Eventos', 'Snacks'];
 const ingredienteSchema = new Schema({
     ingrediente: {
         type: Schema.Types.ObjectId,
-        ref: 'Ingrediente',
+        ref: 'MateriaPrima',
         required: true
     },
     cantidadRequerida: {

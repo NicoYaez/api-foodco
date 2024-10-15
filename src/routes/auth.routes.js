@@ -9,12 +9,6 @@ const authJwt = require("../middlewares/auth.jwt");
 const verifyRegister = require("../middlewares/verifyRegister");
 
 const uploadController = require('../middlewares/upload'); // Importa el middleware de multer
-
-// Aceptar tanto archivos como otros campos
-const uploadFields = upload.fields([
-    { name: 'imagenPerfil', maxCount: 1 }, // Aquí defines el nombre y el número máximo de archivos
-]);
-
 //authJwt.isAdmin,
 //[verifyRegister.checkRegisterUser]
 
@@ -32,8 +26,8 @@ router.post('/cliente/request-reset-password', authCliente.requestPasswordReset)
 
 router.post('/cliente/reset-password', authCliente.resetPassword);
 
-//router.post('/reset-password', authController.resetPassword);
+router.post('/empleado/request-reset-password', authEmpleado.requestPasswordReset);
 
-//router.post('/change-password', authController.changePassword);
+router.post('/empleado/reset-password', authEmpleado.resetPassword);
 
 module.exports = router;

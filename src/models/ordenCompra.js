@@ -20,7 +20,7 @@ const ordenCompraSchema = new Schema({
     },
     estado: {
         type: String,
-        enum: ['pendiente', 'aprobado', 'rechazado', 'en_produccion', 'despachado', 'entregado'],
+        enum: ['pendiente', 'aprobado', 'rechazado', 'en_produccion', 'despachado', 'entregado', 'completado'],
         default: 'pendiente',
         required: true
     },
@@ -78,7 +78,6 @@ ordenCompraSchema.pre('validate', async function (next) {
             const lastOrder = await model('OrdenCompra').findOne().sort({ numero: -1 });
             orden.numero = lastOrder ? lastOrder.numero + 1 : 1;
 
-            console.log('Número de orden asignado:', orden.numero);
             next();
         } catch (error) {
             next(error);

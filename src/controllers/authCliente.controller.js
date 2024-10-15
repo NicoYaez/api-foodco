@@ -11,7 +11,7 @@ const cookieParser = require("cookie-parser");
 const { generateToken } = require("../utils/tokenManager");
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
-const validator = require('validator'); // Necesitarás instalar validator con npm install validator
+const validator = require('validator');
 
 const { sendPasswordResetEmail, sendRegister, sendPasswordChangeConfirmationEmail } = require('../services/email.service');
 
@@ -203,7 +203,6 @@ const verClientePorId = async (req, res) => {
     }
 };
 
-
 const actualizarCliente = async (req, res) => {
     const { id } = req.params;  // ID del cliente a actualizar
     const { username, password, empresa, contacto, sucursal, email } = req.body;
@@ -337,7 +336,8 @@ const generateResetCode = () => {
 };
 
 const requestPasswordReset = async (req, res) => {
-    const { email } = req.body;
+    const email = req.body.email.toLowerCase();
+
     const clienteFound = await Cliente.findOne({ email });
 
     if (!email) {

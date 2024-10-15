@@ -25,6 +25,13 @@ const tokenRoutes = require('../src/routes/token.routes');
 const departamentoRoutes = require('../src/routes/departamento.routes');
 const clienteRoutes = require('../src/routes/cliente.routes');
 const testRoutes = require('../src/routes/test_upload.routes');
+const materiaPrimaRoutes = require('../src/routes/materias.routes.js');
+const tipoProductoRoutes = require('../src/routes/tipos.routes.js');
+const produccionDiariaRoutes = require('../src/routes/produccion.routes.js');
+const inventarioRoutes = require('../src/routes/inventario.routes.js');
+const turnosEmpleados = require('../src/routes/turnoEmpleado.routes.js');
+const reportesRoutes = require('../src/routes/reportes.routes.js');
+const controlCalidadRoutes = require('../src/routes/controlCalidad.routes.js');
 
 const app = express();
 app.set('PORT', process.env.PORT);
@@ -57,6 +64,15 @@ app.use("/api/v1/verify", tokenRoutes);
 app.use("/api/v1/departamento", departamentoRoutes);
 app.use("/api/v1/cliente", clienteRoutes);
 app.use("/api/v1/test", testRoutes)
+app.use("/api/v1/materia-prima", materiaPrimaRoutes);
+app.use("/api/v1/tipos-producto", tipoProductoRoutes);
+app.use("/api/v1/produccion-diaria", produccionDiariaRoutes);
+app.use("/api/v1/inventario", inventarioRoutes);
+app.use("/api/v1/turnos-empleados", turnosEmpleados);
+app.use("/api/v1/reportes", reportesRoutes);
+app.use("/api/v1/control-calidad", controlCalidadRoutes);
+
+
 
 //app.get('*', function(req, res){ res.status(404).json({message: 'ERROR 404'}) });
 
