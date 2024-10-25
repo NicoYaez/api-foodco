@@ -105,8 +105,8 @@ const register = async (req, res) => {
         await sendRegister(username, email, password); // Enviar correo electrónico
 
         // Generar token
-        const { token, expiresIn } = generateToken({ id: userSave._id, type: 'Cliente' }, res);
-
+        const { token, expiresIn } = generateToken({ id: userSave._id, type: 'Cliente' , role: 'Cliente' }, res);
+        
         // Responder con los datos del cliente
         return res.status(200).json({
             token,
@@ -151,7 +151,7 @@ const login = async (req, res) => {
 
         // Generar el token de acceso
         const expiresIn = 60 * 60 * 24; // 1 día de validez
-        const tokenPayload = { id: clienteFound._id, userType: 'Cliente' };
+        const tokenPayload = { id: clienteFound._id, type: 'Cliente' , role: 'Cliente'};
         const token = jwt.sign(tokenPayload, process.env.SECRET_API, { expiresIn });
 
         return res.status(200).json({ token, expiresIn });

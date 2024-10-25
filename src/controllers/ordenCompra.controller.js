@@ -347,6 +347,93 @@ async function actualizarOrdenCompra(req, res) {
     }
 }
 
+async function verOrdenesCompraFiltrado(req, res) {
+    try {
+        const { periodo } = req.params;  // Obtenemos el periodo desde los query params
+        const now = new Date();  // Fecha actual
+        let startDate;  // Fecha de inicio para el filtro
+
+        // Definir la fecha de inicio basada en el período seleccionado
+        switch (periodo) {
+            case 'diario':
+                startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());  // Hoy
+                break;
+            case 'semanal':
+                startDate = new Date(now.setDate(now.getDate() - now.getDay()));  // Primer día de la semana (domingo)
+                break;
+            case 'bisemanal':
+                startDate = new Date(now.setDate(now.getDate() - (now.getDay() + 7)));  // Dos semanas atrás
+                break;
+            case 'mensual':
+                startDate = new Date(now.getFullYear(), now.getMonth(), 1);  // Primer día del mes
+                break;
+            case 'trimestral':
+                const currentMonth = now.getMonth() + 1;  // Mes actual (0-indexado, por lo que sumamos 1)
+                const currentQuarter = Math.floor((currentMonth - 1) / 3) + 1;  // Trimestre actual
+                startDate = new Date(now.getFullYear(), (currentQuarter - 1) * 3, 1);  // Primer día del trimestre
+                break;
+            case 'semestral':
+                const currentSemester = Math.floor((now.getMonth() + 1 - 1) / 6) + 1;  // Semestre actual
+                startDate = new Date(now.getFullYear(), (currentSemester - 1) * 6, 1);  // Primer día del semestre
+                break;
+            default:
+                startDate = null;  // Si no se selecciona período, no filtramos por fecha
+        }
+
+        // Crear la consulta con el filtro de fecha
+        const query = startDate ? { createdAt: { $gte: startDate } } : {};  // Aplicamos el filtro solo si tenemos una startDate
+
+        const ordenes = await OrdenCompra.find(query)
+            .populate({
+                path: 'cliente',
+                populate: [
+                    {
+                        path: 'empresa',
+                        model: 'Empresa',
+                        populate: {
+                            path: 'rubro',
+                            model: 'Rubro',
+                            select: 'nombre'
+                        }
+                    },
+                    {
+                        path: 'sucursal',
+                        model: 'Sucursal'
+                    },
+                    {
+                        path: 'contacto',
+                        model: 'Contacto'
+                    }
+                ]
+            })
+            .populate('empleado')
+            .populate({
+                path: 'seleccionProductos',
+                populate: {
+                    path: 'productos.producto',
+                    model: 'Producto'
+                }
+            })
+            .populate({
+                path: 'seleccionProductos',
+                populate: {
+                    path: 'productos.producto.ingrediente',
+                    model: 'Ingrediente'
+                }
+            });
+
+        // Verificamos si no hay órdenes y enviamos un mensaje adecuado
+        if (ordenes.length === 0) {
+            return res.status(200).json({ message: `No se encontraron órdenes de compra para el período ${periodo}.` });
+        }
+
+        res.status(200).json(ordenes);
+    } catch (error) {
+        console.error('Error al obtener las órdenes de compra:', error);
+        res.status(500).json({ message: 'Error interno del servidor' });
+    }
+}
+
 module.exports = {
     verOrdenesCompra,
     verOrdenesPorCliente,
@@ -355,5 +442,6 @@ module.exports = {
     verOrdenesPorEmpleado,
     verOrdenesCompletadasPorEmpleado,
     verOrdenesPorEstado,
-    actualizarOrdenCompra
+    actualizarOrdenCompra,
+    verOrdenesCompraFiltrado
 };
