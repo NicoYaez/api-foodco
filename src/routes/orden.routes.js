@@ -19,4 +19,6 @@ router.put('/actualizar-estado/:ordenId', [authJwt.verificateToken], ordenCompra
 
 router.put('/update/:ordenId', [authJwt.verificateToken], ordenCompraController.actualizarOrdenCompra);
 
+router.get('/list/periodo/:periodo', [authJwt.verificateToken], ordenCompraController.verOrdenesCompraFiltrado);
+
 module.exports = router;

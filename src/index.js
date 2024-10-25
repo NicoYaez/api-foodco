@@ -32,6 +32,8 @@ const inventarioRoutes = require('../src/routes/inventario.routes.js');
 const turnosEmpleados = require('../src/routes/turnoEmpleado.routes.js');
 const reportesRoutes = require('../src/routes/reportes.routes.js');
 const controlCalidadRoutes = require('../src/routes/controlCalidad.routes.js');
+const ordenDespachoRoutes = require('../src/routes/ordenDespacho.routes.js');
+const seguimientoRoutes = require('../src/routes/seguimiento.routes.js');
 
 const app = express();
 app.set('PORT', process.env.PORT);
@@ -71,8 +73,8 @@ app.use("/api/v1/inventario", inventarioRoutes);
 app.use("/api/v1/turnos-empleados", turnosEmpleados);
 app.use("/api/v1/reportes", reportesRoutes);
 app.use("/api/v1/control-calidad", controlCalidadRoutes);
-
-
+app.use("/api/v1/orden-despacho", ordenDespachoRoutes);
+app.use("/api/v1/seguimiento", seguimientoRoutes);
 
 //app.get('*', function(req, res){ res.status(404).json({message: 'ERROR 404'}) });
 
