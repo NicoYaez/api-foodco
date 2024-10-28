@@ -434,6 +434,49 @@ async function verOrdenesCompraFiltrado(req, res) {
     }
 }
 
+async function verOrdenesPorClienteYEstado(req, res) {
+    try {
+        const { clienteId } = req.params; // Obtener el clienteId de los parámetros de la ruta
+        const { estado } = req.query;     // Obtener el estado de la consulta (query)
+
+        // Construimos el filtro dependiendo de si clienteId y/o estado son proporcionados
+        const filtro = {};
+        if (clienteId) {
+            filtro.cliente = clienteId; // Agregar filtro por cliente si es proporcionado
+        }
+        if (estado && estado !== 'no-completado') {
+            // Si el estado es proporcionado y no es "no_completado", filtramos por ese estado específico
+            filtro.estado = estado;
+        } else if (estado === 'no-completado') {
+            // Si el estado es "no_completado", excluimos las órdenes con estado "completado"
+            filtro.estado = { $ne: 'completado' };
+        }
+
+        // Buscar órdenes de compra filtradas por cliente y estado (si se proporcionaron)
+        const ordenes = await OrdenCompra.find(filtro)
+            .populate('cliente')  // Información del cliente
+            .populate('empleado')  // Información del empleado que realizó la orden
+            .populate({
+                path: 'seleccionProductos',
+                populate: {
+                    path: 'productos.producto',  // Poblamos los productos dentro de seleccionProductos
+                    model: 'Producto'  // Nombre del modelo de productos
+                }
+            });
+
+        // Si no se encuentran órdenes que cumplan el filtro
+        if (ordenes.length === 0) {
+            return res.status(404).json({ message: 'No se encontraron órdenes con los criterios proporcionados' });
+        }
+
+        // Responder con las órdenes encontradas
+        res.status(200).json(ordenes);
+    } catch (error) {
+        console.error('Error al obtener las órdenes de compra por cliente y estado:', error);
+        res.status(500).json({ message: 'Error interno del servidor' });
+    }
+}
+
 module.exports = {
     verOrdenesCompra,
     verOrdenesPorCliente,
@@ -443,5 +486,6 @@ module.exports = {
     verOrdenesCompletadasPorEmpleado,
     verOrdenesPorEstado,
     actualizarOrdenCompra,
-    verOrdenesCompraFiltrado
+    verOrdenesCompraFiltrado,
+    verOrdenesPorClienteYEstado
 };
