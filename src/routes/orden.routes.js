@@ -9,7 +9,7 @@ router.get('/list', [authJwt.verificateToken], ordenCompraController.verOrdenesP
 
 router.get('/view/:id', [authJwt.verificateToken], ordenCompraController.verOrdenCompraPorId);
  
-router.get('/list/cliente/:clienteId', [authJwt.verificateToken], ordenCompraController.verOrdenesPorCliente);
+router.get('/list/cliente/:clienteId', ordenCompraController.verOrdenesPorClienteYEstado);
 
 router.get('/list/empleado/:empleadoId', [authJwt.verificateToken], ordenCompraController.verOrdenesPorEmpleado);
 
