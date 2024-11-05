@@ -5,7 +5,9 @@ const authJwt = require("../middlewares/auth.jwt");
 
 //router.get('/list', [authJwt.verificateToken], ordenCompraController.verOrdenesCompra);
 
-router.get('/list', [authJwt.verificateToken], ordenCompraController.verOrdenesPorEstado);
+router.get('/list', ordenCompraController.verOrdenesPorEstado);
+
+router.get('/list/sin-factura', ordenCompraController.verOrdenesCompraSinFactura);
 
 router.get('/view/:id', [authJwt.verificateToken], ordenCompraController.verOrdenCompraPorId);
  
@@ -15,7 +17,7 @@ router.get('/list/empleado/:empleadoId', [authJwt.verificateToken], ordenCompraC
 
 router.get('/list/empleado/:empleadoId/completadas', [authJwt.verificateToken], ordenCompraController.verOrdenesCompletadasPorEmpleado);
 
-router.put('/actualizar-estado/:ordenId', [authJwt.verificateToken], ordenCompraController.actualizarEstadoOrden);
+router.put('/actualizar-estado/:ordenId', ordenCompraController.actualizarEstadoOrden);
 
 router.put('/update/:ordenId', [authJwt.verificateToken], ordenCompraController.actualizarOrdenCompra);
 

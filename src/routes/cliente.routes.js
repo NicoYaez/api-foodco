@@ -8,4 +8,6 @@ router.delete('/delete/:id', clienteController.deleteCliente);
 
 router.get('/view/:id', clienteController.verClientePorId);
 
+router.post('/verify', clienteController.verificarCliente);
+
 module.exports = router;

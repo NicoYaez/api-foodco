@@ -30,4 +30,6 @@ router.post('/empleado/request-reset-password', authEmpleado.requestPasswordRese
 
 router.post('/empleado/reset-password', authEmpleado.resetPassword);
 
+router.get('/empleado/view/:id', authEmpleado.getEmpleadoById);
+
 module.exports = router;

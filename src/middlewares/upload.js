@@ -7,10 +7,12 @@ const crypto = require('crypto'); // Para generar un nombre aleatorio
 // Directorios de almacenamiento
 const publicDir = path.join(__dirname, '..', 'public/images');
 const profileDir = path.join(__dirname, '..', 'public/images/profile');
+const pdfDir = path.join(__dirname, '..', 'public/uploads/facturas');
 
 // Crear los directorios si no existen
 fs.ensureDirSync(publicDir);
 fs.ensureDirSync(profileDir);
+fs.ensureDirSync(pdfDir);
 
 // Función para generar un nombre aleatorio
 const generateUniqueFileName = () => {
@@ -35,6 +37,16 @@ const storageProfile = multer.diskStorage({
   filename: function (req, file, cb) {
     const newFileName = generateUniqueFileName(); // Generar un nombre aleatorio
     cb(null, newFileName); // Asignar el nuevo nombre sin extensión
+  }
+});
+
+const storageFacturas = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, pdfDir); // Carpeta para los archivos PDF
+  },
+  filename: function (req, file, cb) {
+    const newFileName = `${generateUniqueFileName()}.pdf`; // Genera un nombre aleatorio y agrega .pdf
+    cb(null, newFileName);
   }
 });
 
@@ -66,6 +78,18 @@ const uploadProfile = multer({
     cb(new Error('El archivo debe ser una imagen válida (jpeg, jpg, png).'));
   }
 }).single('imagenPerfil'); // Solo una imagen de perfil
+
+const uploadPDF = multer({
+  storage: storageFacturas,
+  limits: { fileSize: 1024 * 1024 * 100 }, // Limitar tamaño a 100MB
+  fileFilter: (req, file, cb) => {
+    const mimetype = file.mimetype === 'application/pdf';
+    if (mimetype) {
+      return cb(null, true);
+    }
+    cb(new Error('El archivo debe ser un PDF.'));
+  }
+}).single('file'); // Aceptar solo un archivo PDF
 
 // Middleware para procesar las imágenes y convertirlas a WebP
 const uploadAndConvertToWebP = (req, res, next) => {
@@ -149,5 +173,6 @@ const uploadAndResizeProfileImage = (req, res, next) => {
 
 module.exports = {
   uploadAndConvertToWebP,
-  uploadAndResizeProfileImage
+  uploadAndResizeProfileImage,
+  uploadPDF
 };

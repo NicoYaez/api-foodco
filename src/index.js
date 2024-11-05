@@ -34,6 +34,7 @@ const reportesRoutes = require('../src/routes/reportes.routes.js');
 const controlCalidadRoutes = require('../src/routes/controlCalidad.routes.js');
 const ordenDespachoRoutes = require('../src/routes/ordenDespacho.routes.js');
 const seguimientoRoutes = require('../src/routes/seguimiento.routes.js');
+const facturaRoutes = require('../src/routes/factura.routes.js');
 
 const app = express();
 app.set('PORT', process.env.PORT);
@@ -75,6 +76,7 @@ app.use("/api/v1/reportes", reportesRoutes);
 app.use("/api/v1/control-calidad", controlCalidadRoutes);
 app.use("/api/v1/orden-despacho", ordenDespachoRoutes);
 app.use("/api/v1/seguimiento", seguimientoRoutes);
+app.use("/api/v1/factura", facturaRoutes);
 
 //app.get('*', function(req, res){ res.status(404).json({message: 'ERROR 404'}) });
 

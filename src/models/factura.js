@@ -12,16 +12,23 @@ const facturaSchema = new Schema({
         ref: 'Cliente',
         required: true
     },
-    venta: {
+    ordenCompra: {
         type: Schema.Types.ObjectId,
-        ref: 'Venta',
+        ref: 'OrdenCompra',
         required: true
     },
-    subContrato: {
-        type: Schema.Types.ObjectId,
-        ref: 'subContrato',
+    archivo: {
+        type: String,
         required: true
     }
+}, {
+    timestamps: true,
+    versionKey: false
 });
+
+// Método para establecer la URL de acceso a los archivos PDF de facturas
+facturaSchema.methods.setArchivos = function setArchivos(filename) {
+    this.archivo = `${process.env.API_URL}/public/uploads/facturas/${filename}`;
+};
 
 module.exports = model("Factura", facturaSchema);

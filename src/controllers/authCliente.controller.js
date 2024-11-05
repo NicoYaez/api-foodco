@@ -105,8 +105,8 @@ const register = async (req, res) => {
         await sendRegister(username, email, password); // Enviar correo electrónico
 
         // Generar token
-        const { token, expiresIn } = generateToken({ id: userSave._id, type: 'Cliente' , role: 'Cliente' }, res);
-        
+        const { token, expiresIn } = generateToken({ id: userSave._id, type: 'Cliente', role: 'Cliente' }, res);
+
         // Responder con los datos del cliente
         return res.status(200).json({
             token,
@@ -151,7 +151,7 @@ const login = async (req, res) => {
 
         // Generar el token de acceso
         const expiresIn = 60 * 60 * 24; // 1 día de validez
-        const tokenPayload = { id: clienteFound._id, type: 'Cliente' , role: 'Cliente'};
+        const tokenPayload = { id: clienteFound._id, type: 'Cliente', role: 'Cliente' };
         const token = jwt.sign(tokenPayload, process.env.SECRET_API, { expiresIn });
 
         return res.status(200).json({ token, expiresIn });
@@ -187,7 +187,13 @@ const verClientePorId = async (req, res) => {
         // Buscar el cliente en la base de datos por su id y realizar los populates necesarios
         const cliente = await Cliente.findById(clienteId)
             .populate('contacto')
-            .populate('empresa')
+            .populate({
+                path: 'empresa',
+                populate: {
+                    path: 'rubro',
+                    select: 'nombre'
+                }
+            })
             .populate('sucursal');
 
         // Si el cliente no existe
@@ -371,7 +377,7 @@ const resetPassword = async (req, res) => {
         return res.status(400).json({ message: 'Debe proporcionar el correo electrónico' });
     }
 
-    if(!resetCode) {
+    if (!resetCode) {
         return res.status(400).json({ message: 'Debe proporcionar el código de restablecimiento' });
     }
 
@@ -473,6 +479,31 @@ const changePassword = async (req, res) => {
     return res.status(200).json({ message: "Contraseña actualizada con éxito" });
 };
 
+const verificarCliente = async (req, res) => {
+    try {
+        const { id, password } = req.body;
+
+        if (!id || !password) {
+            return res.status(400).json({ auth: false, message: "ID y contraseña son obligatorios" });
+        }
+
+        const clienteFound = await Cliente.findOne({ _id: id });
+        if (!clienteFound) {
+            return res.status(404).json({ auth: false, message: "Cliente no encontrado" });
+        }
+
+        const matchPassword = await clienteFound.validatePassword(password, clienteFound.password);
+        if (!matchPassword) {
+            return res.status(401).json({ auth: false, message: "Contraseña incorrecta" });
+        }
+
+        return res.status(200).json({ auth: true, message: "Verificacion Correcta" });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ message: "Error interno del servidor" });
+    }
+};
+
 module.exports = {
     register,
     login,
@@ -481,5 +512,6 @@ module.exports = {
     deleteCliente,
     requestPasswordReset,
     verClientePorId,
-    resetPassword
+    resetPassword,
+    verificarCliente
 };
