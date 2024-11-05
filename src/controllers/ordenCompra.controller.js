@@ -1,6 +1,7 @@
 const OrdenCompra = require('../models/ordenCompra');
 const Empleado = require('../models/empleado');
 const Cliente = require('../models/cliente');
+const Factura = require('../models/factura');
 
 async function verOrdenesCompra(req, res) {
     try {
@@ -444,12 +445,12 @@ async function verOrdenesPorClienteYEstado(req, res) {
         if (clienteId) {
             filtro.cliente = clienteId; // Agregar filtro por cliente si es proporcionado
         }
-        if (estado && estado !== 'no-completado') {
-            // Si el estado es proporcionado y no es "no_completado", filtramos por ese estado específico
+        if (estado && estado !== 'no-completado' && estado !== 'completado') {
             filtro.estado = estado;
+        } else if (estado === 'completado') {
+            filtro.estado = { $in: ['entregado', 'rechazado', 'completado'] };
         } else if (estado === 'no-completado') {
-            // Si el estado es "no_completado", excluimos las órdenes con estado "completado"
-            filtro.estado = { $ne: 'completado' };
+            filtro.estado = { $nin: ['entregado', 'rechazado', 'completado'] };
         }
 
         // Buscar órdenes de compra filtradas por cliente y estado (si se proporcionaron)
@@ -477,6 +478,53 @@ async function verOrdenesPorClienteYEstado(req, res) {
     }
 }
 
+async function verOrdenesCompraSinFactura(req, res) {
+    try {
+        // Obtener los IDs de las órdenes de compra que ya tienen una factura
+        const facturas = await Factura.find().select('ordenCompra'); // Obtiene solo el campo de ordenCompra
+        const ordenesConFacturaIds = facturas.map(factura => factura.ordenCompra.toString());
+
+        // Filtrar las órdenes de compra que no están en la lista de IDs de órdenes con factura
+        const ordenesSinFactura = await OrdenCompra.find({ _id: { $nin: ordenesConFacturaIds } })
+            .populate({
+                path: 'cliente',
+                populate: [
+                    {
+                        path: 'empresa',
+                        model: 'Empresa',
+                        populate: {
+                            path: 'rubro',
+                            model: 'Rubro',
+                            select: 'nombre'
+                        }
+                    },
+                    { path: 'sucursal', model: 'Sucursal' },
+                    { path: 'contacto', model: 'Contacto' }
+                ]
+            })
+            .populate('empleado')
+            .populate({
+                path: 'seleccionProductos',
+                populate: {
+                    path: 'productos.producto',
+                    model: 'Producto'
+                }
+            })
+            .populate({
+                path: 'seleccionProductos',
+                populate: {
+                    path: 'productos.producto.ingrediente',
+                    model: 'Ingrediente'
+                }
+            });
+
+        res.status(200).json(ordenesSinFactura);
+    } catch (error) {
+        console.error('Error al obtener las órdenes de compra sin factura:', error);
+        res.status(500).json({ message: 'Error interno del servidor' });
+    }
+}
+
 module.exports = {
     verOrdenesCompra,
     verOrdenesPorCliente,
@@ -487,5 +535,6 @@ module.exports = {
     verOrdenesPorEstado,
     actualizarOrdenCompra,
     verOrdenesCompraFiltrado,
-    verOrdenesPorClienteYEstado
+    verOrdenesPorClienteYEstado,
+    verOrdenesCompraSinFactura
 };

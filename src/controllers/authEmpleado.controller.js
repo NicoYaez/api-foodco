@@ -303,11 +303,35 @@ const changePassword = async (req, res) => {
   return res.status(200).json({ message: "Contraseña actualizada con éxito" });
 };
 
+const getEmpleadoById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Buscar el empleado por ID y hacer populate en los campos relacionados
+    const empleado = await Empleado.findById(id)
+      .populate('departamento', 'nombre') // Populate en el departamento, solo traer el nombre
+      .populate('role', 'nombre') // Populate en el rol, solo traer el nombre
+      .populate('sucursal', 'nombre'); // Populate en la sucursal, solo traer el nombre
+
+    // Verificar si el empleado existe
+    if (!empleado) {
+      return res.status(404).json({ message: 'Empleado no encontrado' });
+    }
+
+    // Responder con el empleado encontrado
+    res.json(empleado);
+  } catch (error) {
+    console.error('Error al obtener el empleado:', error);
+    res.status(500).json({ message: 'Error al obtener el empleado' });
+  }
+};
+
 module.exports = {
   register,
   login,
   verEmpleados,
   verEmpleadosFiltrados,
   requestPasswordReset,
-  resetPassword
+  resetPassword,
+  getEmpleadoById
 };
