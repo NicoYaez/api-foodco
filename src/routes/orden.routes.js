@@ -23,4 +23,6 @@ router.put('/update/:ordenId', [authJwt.verificateToken], ordenCompraController.
 
 router.get('/list/periodo/:periodo', [authJwt.verificateToken], ordenCompraController.verOrdenesCompraFiltrado);
 
+router.get('/list/despacho', ordenCompraController.verOrdenesListasParaDespacho);
+
 module.exports = router;

@@ -525,6 +525,38 @@ async function verOrdenesCompraSinFactura(req, res) {
     }
 }
 
+async function verOrdenesListasParaDespacho(req, res) {
+    try {
+        // Definir el filtro para estado "listo_para_despachar"
+        const filtro = { estado: 'listo_para_despachar' };
+
+        // Buscar órdenes de compra con estado "listo_para_despachar" y ordenarlas por fechaRequerida
+        const ordenes = await OrdenCompra.find(filtro)
+            .sort({ fechaRequerida: 1 }) // Ordena por fechaRequerida en orden ascendente (más urgente primero)
+            .populate('cliente')  // Información del cliente
+            .populate('empleado')  // Información del empleado que realizó la orden
+            .populate({
+                path: 'seleccionProductos',
+                populate: {
+                    path: 'productos.producto',  // Poblamos los productos dentro de seleccionProductos
+                    model: 'Producto'  // Nombre del modelo de productos
+                }
+            });
+
+        // Si no se encuentran órdenes que cumplan el filtro
+        if (ordenes.length === 0) {
+            return res.status(404).json({ message: 'No se encontraron órdenes con estado listo_para_despachar' });
+        }
+
+        // Responder con las órdenes encontradas
+        res.status(200).json(ordenes);
+    } catch (error) {
+        console.error('Error al obtener las órdenes listas para despacho:', error);
+        res.status(500).json({ message: 'Error interno del servidor' });
+    }
+}
+
+
 module.exports = {
     verOrdenesCompra,
     verOrdenesPorCliente,
@@ -536,5 +568,6 @@ module.exports = {
     actualizarOrdenCompra,
     verOrdenesCompraFiltrado,
     verOrdenesPorClienteYEstado,
-    verOrdenesCompraSinFactura
+    verOrdenesCompraSinFactura,
+    verOrdenesListasParaDespacho
 };

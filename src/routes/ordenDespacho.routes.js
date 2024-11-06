@@ -3,10 +3,16 @@ const router = express.Router();
 const ordenDespachoController = require('../controllers/despacho.controller');
 const authJwt = require("../middlewares/auth.jwt");
 
-router.post('/', [authJwt.verificateToken], ordenDespachoController.crearOrdenDespacho);
+router.post('/crear', ordenDespachoController.crearOrdenDespacho);
 
-router.get('/list', [authJwt.verificateToken], ordenDespachoController.verOrdenesDespacho);
+router.get('/list', ordenDespachoController.verOrdenesDespacho);
 
-router.post('/:numeroOrdenDespacho/estado', ordenDespachoController.actualizarEstadoOrdenDespacho);
+router.post('/:ordenDespachoId/estado', ordenDespachoController.actualizarEstadoOrdenDespacho);
+
+router.get('/:id', ordenDespachoController.verOrdenDespachoPorId);
+
+router.put('/:ordenDespachoId/camion', ordenDespachoController.asignarCamion);
+
+router.put('/update/:id', ordenDespachoController.actualizarOrdenDespacho);
 
 module.exports = router;

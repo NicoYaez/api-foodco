@@ -1,20 +1,36 @@
 const mongoose = require('mongoose');
 const { Schema, model } = mongoose;
 
-// Definimos los estados posibles para la orden de despacho
 const estadosPosibles = ['en_preparación', 'despachado', 'cancelado', 'entregado', 'completado'];
+
+const camionSchema = new Schema({
+    nombreConductor: {
+        type: String,
+        default: 'Sin conductor asignado'
+    },
+    patente: {
+        type: String,
+        default: 'Sin patente asignado'
+    },
+    tipoCamion: {
+        type: String,
+        default: 'Sin tipo asignado'
+    }
+}, {
+    _id: false
+});
 
 const historialEstadoSchema = new Schema({
     estado: {
         type: String,
-        enum: estadosPosibles, // Aseguramos que el estado sea uno de los permitidos
+        enum: estadosPosibles,
         required: true
     },
     fechaCambio: {
         type: Date,
-        default: Date.now // Fecha del cambio de estado
+        default: Date.now
     }
-},{
+}, {
     timestamps: false,
     versionKey: false,
     _id: false
@@ -41,13 +57,13 @@ const ordenDespachoSchema = new Schema({
         ref: 'Cliente',
         required: true
     },
-    subContrato: {
-        type: Schema.Types.ObjectId,
-        ref: 'SubContrato'
+    camion: {
+        type: camionSchema,
+        required: false
     },
     fecha: {
         type: Date,
-        default: Date.now, // Asigna la fecha y hora actuales por defecto
+        default: Date.now,
         required: true
     },
     fechaRequerida: {
@@ -56,14 +72,14 @@ const ordenDespachoSchema = new Schema({
     },
     estado: {
         type: String,
-        enum: estadosPosibles, // Solo permite valores dentro de la lista de estados
-        default: 'en_preparación' // Estado inicial de la orden
+        enum: estadosPosibles,
+        default: 'en_preparación'
     },
     comentario: {
-        type: String, // Campo para agregar un comentario adicional
+        type: String,
         trim: true
     },
-    historialEstados: [historialEstadoSchema] // Arreglo que guarda el historial de cambios de estado
+    historialEstados: [historialEstadoSchema]
 }, {
     timestamps: true,
     versionKey: false,
