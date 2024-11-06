@@ -10,7 +10,8 @@ function generarNumeroOrdenDespacho() {
 }
 
 const crearOrdenDespacho = async (req, res) => {
-    const { ordenCompraId } = req.body;
+    const { ordenCompraId, camion } = req.body;
+
     try {
         // Buscar la orden de compra seleccionada
         const ordenCompra = await OrdenCompra.findById(ordenCompraId);
@@ -29,14 +30,15 @@ const crearOrdenDespacho = async (req, res) => {
         // Generar el número único de 25 dígitos para la orden de despacho
         const numeroDespacho = generarNumeroOrdenDespacho();
 
-        // Crear una nueva orden de despacho
+        // Crear una nueva orden de despacho con detalles del camión incluidos solo si se proporciona
         const nuevaOrdenDespacho = new OrdenDespacho({
-            numero: numeroDespacho, // Número único de 25 dígitos
-            empleado: ordenCompra.empleado,  // ID del empleado que genera la orden de despacho
-            ordenCompra: ordenCompra._id,  // Referencia a la orden de compra
-            cliente: ordenCompra.cliente,  // Cliente asociado a la orden de compra
-            estado: 'en_preparación',  // Estado inicial de la orden de despacho
-            fechaRequerida: ordenCompra.fechaRequerida,  // Fecha de entrega requerida
+            numero: numeroDespacho,
+            empleado: ordenCompra.empleado,
+            ordenCompra: ordenCompra._id,
+            cliente: ordenCompra.cliente,
+            estado: 'en_preparación',
+            fechaRequerida: ordenCompra.fechaRequerida,
+            camion: camion || {} // Solo se asigna el camión si se proporciona
         });
 
         // Guardar la nueva orden de despacho en la base de datos
@@ -51,7 +53,7 @@ const crearOrdenDespacho = async (req, res) => {
         console.error('Error al crear la orden de despacho:', error);
         return res.status(500).json({ message: 'Error al crear la orden de despacho' });
     }
-}
+};
 
 const verOrdenesDespacho = async (req, res) => {
     try {
@@ -99,12 +101,12 @@ const verOrdenesDespacho = async (req, res) => {
 }
 
 const actualizarEstadoOrdenDespacho = async (req, res) => {
-    const { numeroOrdenDespacho } = req.params;  // El número de la orden de despacho se pasa como parámetro en la URL
-    const { nuevoEstado } = req.body;  // El nuevo estado se envía en el cuerpo de la solicitud
+    const ordenDespachoId = req.params.ordenDespachoId;
+    const { nuevoEstado } = req.body;
 
     try {
         // Buscar la orden de despacho por su número
-        const ordenDespacho = await OrdenDespacho.findOne({ numero: numeroOrdenDespacho });
+        const ordenDespacho = await OrdenDespacho.findById(ordenDespachoId);
 
         if (!ordenDespacho) {
             return res.status(404).json({ message: 'Orden de despacho no encontrada' });
@@ -131,8 +133,120 @@ const actualizarEstadoOrdenDespacho = async (req, res) => {
     }
 };
 
+const asignarCamion = async (req, res) => {
+    const ordenDespachoId = req.params.ordenDespachoId;
+    const { camion } = req.body;
+    try {
+        // Buscar la orden de despacho por ID
+        const ordenDespacho = await OrdenDespacho.findById(ordenDespachoId);
+
+        if (!ordenDespacho) {
+            return res.status(404).json({ message: 'Orden de despacho no encontrada' });
+        }
+
+        // Asignar los detalles del camión
+        ordenDespacho.camion = {
+            nombreConductor: camion.nombreConductor,
+            patente: camion.patente,
+            tipoCamion: camion.tipoCamion
+        };
+
+        // Guardar los cambios
+        await ordenDespacho.save();
+
+        return res.status(200).json({
+            message: 'Camión asignado exitosamente a la orden de despacho',
+            ordenDespacho
+        });
+
+    } catch (error) {
+        console.error('Error al asignar el camión:', error);
+        return res.status(500).json({ message: 'Error al asignar el camión' });
+    }
+};
+
+const verOrdenDespachoPorId = async (req, res) => {
+    const { id } = req.params;  // Obtenemos el ID desde los parámetros de la URL
+
+    try {
+        // Buscar la orden de despacho específica por ID y hacer populate a la orden de compra
+        const ordenDespacho = await OrdenDespacho.findById(id)
+            .populate({
+                path: 'ordenCompra',
+                select: '-empleado -cliente',  // Excluye empleado y cliente dentro de ordenCompra
+                populate: {
+                    path: 'seleccionProductos',
+                    select: 'productos direccion ciudad pais precioTotalOrden',  // Popula la selección de productos
+                }
+            })
+            .populate({
+                path: 'empleado',  // Popula el empleado que creó la orden de despacho
+                select: '-password',  // Excluye solo el campo password
+                populate: {
+                    path: 'role',  // Popula el role del empleado
+                    select: 'nombre'  // Selecciona solo el nombre del rol
+                }
+            })
+            .populate({
+                path: 'cliente',  // Popula el cliente asociado a la orden de despacho
+                select: '-password',  // Excluye solo el campo password
+                populate: [
+                    {
+                        path: 'empresa',  // Popula la empresa asociada al cliente
+                    },
+                    {
+                        path: 'contacto',  // Popula el contacto asociado al cliente
+                    }
+                ]
+            });
+
+        // Si no se encuentra la orden de despacho con el ID dado
+        if (!ordenDespacho) {
+            return res.status(404).json({ message: 'Orden de despacho no encontrada' });
+        }
+
+        // Responder con la orden de despacho y la orden de compra populada
+        res.status(200).json(ordenDespacho);
+    } catch (error) {
+        console.error('Error al obtener la orden de despacho por ID:', error);
+        return res.status(500).json({ message: 'Error al obtener la orden de despacho' });
+    }
+};
+
+const actualizarOrdenDespacho = async (req, res) => {
+    const { id } = req.params;
+    const { estado, comentario, fechaRequerida, camion } = req.body;
+
+    try {
+        // Verificar si la orden de despacho existe
+        const ordenDespacho = await OrdenDespacho.findById(id);
+        if (!ordenDespacho) {
+            return res.status(404).json({ message: `Orden de despacho con id ${id} no encontrada` });
+        }
+
+        if (estado) ordenDespacho.estado = estado;
+        if (comentario) ordenDespacho.comentario = comentario;
+        if (fechaRequerida) ordenDespacho.fechaRequerida = fechaRequerida;
+
+        if (camion) {
+            if (camion.nombreConductor) ordenDespacho.camion.nombreConductor = camion.nombreConductor;
+            if (camion.patente) ordenDespacho.camion.patente = camion.patente;
+            if (camion.tipoCamion) ordenDespacho.camion.tipoCamion = camion.tipoCamion;
+        }
+
+        await ordenDespacho.save();
+        return res.status(200).json({ message: 'Orden de despacho actualizada exitosamente', ordenDespacho });
+    } catch (error) {
+        console.error('Error al actualizar la orden de despacho:', error.message);
+        return res.status(500).json({ message: 'Error al actualizar la orden de despacho', error: error.message });
+    }
+};
+
 module.exports = {
     crearOrdenDespacho,
     verOrdenesDespacho,
-    actualizarEstadoOrdenDespacho
+    actualizarEstadoOrdenDespacho,
+    asignarCamion,
+    verOrdenDespachoPorId,
+    actualizarOrdenDespacho
 };

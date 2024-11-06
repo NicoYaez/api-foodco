@@ -20,7 +20,7 @@ const ordenCompraSchema = new Schema({
     },
     estado: {
         type: String,
-        enum: ['pendiente', 'aprobado', 'rechazado', 'en_produccion', 'despachado', 'entregado', 'completado'],
+        enum: ['pendiente', 'aprobado', 'rechazado', 'en_produccion', 'listo_para_despachar', 'despachado', 'entregado', 'completado'],
         default: 'pendiente',
         required: true
     },
@@ -68,7 +68,6 @@ const ordenCompraSchema = new Schema({
     versionKey: false,
 });
 
-// Middleware para generar el número de orden único antes de validar
 ordenCompraSchema.pre('validate', async function (next) {
     const orden = this;
 
@@ -87,7 +86,6 @@ ordenCompraSchema.pre('validate', async function (next) {
     }
 });
 
-// Middleware para calcular el precio total e IVA antes de guardar
 ordenCompraSchema.pre('save', async function (next) {
     const orden = this;
 
