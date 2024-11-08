@@ -7,7 +7,7 @@ API FOODCO es el backend diseñado para soportar la aplicación de venta de menu
 Para comenzar con el proyecto, sigue estos pasos:
 
 ```bash
-git clone [https://github.com/NicoYaez/api-corlecof.git](https://github.com/NicoYaez/api-foodco.git)
+git clone https://github.com/NicoYaez/api-foodco.git
 cd api-foodco
 ```
 
