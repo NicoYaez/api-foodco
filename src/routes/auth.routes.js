@@ -32,4 +32,6 @@ router.post('/empleado/reset-password', authEmpleado.resetPassword);
 
 router.get('/empleado/view/:id', authEmpleado.getEmpleadoById);
 
+router.put('/cliente/change-password', authCliente.changePassword);
+
 module.exports = router;

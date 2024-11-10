@@ -9,7 +9,7 @@ router.get('/list', ordenCompraController.verOrdenesPorEstado);
 
 router.get('/list/sin-factura', ordenCompraController.verOrdenesCompraSinFactura);
 
-router.get('/view/:id', [authJwt.verificateToken], ordenCompraController.verOrdenCompraPorId);
+router.get('/view/:id', ordenCompraController.verOrdenCompraPorId);
  
 router.get('/list/cliente/:clienteId', ordenCompraController.verOrdenesPorClienteYEstado);
 
