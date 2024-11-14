@@ -442,7 +442,7 @@ const changePassword = async (req, res) => {
         return res.status(401).json({ auth: false, message: 'Token no es válido' });
     }
 
-    const userId = decoded.id;
+    const clienteId = decoded.id;
 
     if (!currentPassword || !newPassword || !confirmPassword) {
         return res.status(400).json({ message: "Debe proporcionar la contraseña actual, la nueva contraseña y la confirmación de la nueva contraseña" });
@@ -452,29 +452,26 @@ const changePassword = async (req, res) => {
         return res.status(400).json({ message: "La nueva contraseña y la confirmación de la nueva contraseña deben coincidir" });
     }
 
-    const user = await User.findById(userId);
+    const cliente = await Cliente.findById(clienteId);
 
-    if (!user) {
+    if (!cliente) {
         return res.status(404).json({ message: "Usuario no encontrado" });
     }
 
-    const validPassword = await user.comparePassword(currentPassword);
-
-    //console.log(currentPassword)
-    //console.log(user.password);
+    const validPassword = await cliente.comparePassword(currentPassword);
 
     if (!validPassword) {
         return res.status(400).json({ message: "La contraseña actual es incorrecta" });
     }
 
-    const samePassword = await user.comparePassword(newPassword);
+    const samePassword = await cliente.comparePassword(newPassword);
 
     if (samePassword) {
         return res.status(400).json({ message: "La nueva contraseña no puede ser la misma que la actual" });
     }
 
-    user.password = await user.encryptPassword(newPassword);
-    await user.save();
+    cliente.password = await cliente.encryptPassword(newPassword);
+    await cliente.save();
 
     return res.status(200).json({ message: "Contraseña actualizada con éxito" });
 };
@@ -513,5 +510,6 @@ module.exports = {
     requestPasswordReset,
     verClientePorId,
     resetPassword,
-    verificarCliente
+    verificarCliente,
+    changePassword
 };

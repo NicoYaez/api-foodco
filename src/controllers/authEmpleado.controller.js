@@ -7,6 +7,9 @@ const { generateToken } = require("../utils/tokenManager");
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const validator = require('validator');
+const Role = require('../models/role');
+const Departamento = require('../models/departamento');
+const Sucursal = require('../models/sucursal');
 
 const login = async (req, res) => {
   try {
@@ -230,21 +233,34 @@ const verEmpleados = async (req, res) => {
 
 const verEmpleadosFiltrados = async (req, res) => {
   try {
-    const { role, departamento, sucursal } = req.query; // Obtener filtros desde query params
+    const { role, departamento, sucursal } = req.query;
 
     // Crear un objeto de búsqueda dinámico
     let filtro = {};
 
+    // Realizar consultas de búsqueda para obtener los ObjectId de los nombres
     if (role) {
-      filtro.role = role; // Filtrar por ObjectId del role si se proporciona
+      const roleDoc = await Role.findOne({ nombre: role });
+      if (!roleDoc) {
+        return res.status(404).json({ message: `No se encontró el rol con nombre: ${role}` });
+      }
+      filtro.role = roleDoc._id;
     }
 
     if (departamento) {
-      filtro.departamento = departamento; // Filtrar por ObjectId del departamento si se proporciona
+      const departamentoDoc = await Departamento.findOne({ nombre: departamento });
+      if (!departamentoDoc) {
+        return res.status(404).json({ message: `No se encontró el departamento con nombre: ${departamento}` });
+      }
+      filtro.departamento = departamentoDoc._id;
     }
 
     if (sucursal) {
-      filtro.sucursal = sucursal; // Filtrar por ObjectId de la sucursal si se proporciona
+      const sucursalDoc = await Sucursal.findOne({ nombre: sucursal });
+      if (!sucursalDoc) {
+        return res.status(404).json({ message: `No se encontró la sucursal con nombre: ${sucursal}` });
+      }
+      filtro.sucursal = sucursalDoc._id;
     }
 
     // Buscar empleados con los filtros proporcionados
@@ -253,12 +269,10 @@ const verEmpleadosFiltrados = async (req, res) => {
       .populate('departamento', 'nombre') // Popular el campo 'departamento' y solo traer el 'nombre'
       .populate('sucursal', 'nombre'); // Popular el campo 'sucursal' y solo traer el 'nombre'
 
-    // Verificar si hay empleados
     if (!empleados || empleados.length === 0) {
       return res.status(404).json({ message: 'No se encontraron empleados con los filtros proporcionados' });
     }
 
-    // Responder con la lista de empleados y sus campos populados
     res.status(200).json({ empleados });
   } catch (error) {
     console.error('Error al obtener empleados:', error);
