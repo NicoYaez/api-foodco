@@ -25,4 +25,10 @@ router.get('/list/periodo/:periodo', [authJwt.verificateToken], ordenCompraContr
 
 router.get('/list/despacho', ordenCompraController.verOrdenesListasParaDespacho);
 
+router.put('/:ordenId/cuotas', ordenCompraController.actualizarNumeroDeCuotas);
+
+router.put('/:ordenId/cuotas/:numeroCuota', ordenCompraController.actualizarEstadoCuota);
+
+router.get('/:ordenId/cuotas', ordenCompraController.verOrdenesCompraCuotas);
+
 module.exports = router;

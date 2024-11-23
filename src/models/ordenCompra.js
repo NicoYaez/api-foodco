@@ -41,6 +41,26 @@ const ordenCompraSchema = new Schema({
         type: Number,
         required: true // Precio total incluyendo IVA
     },
+    numeroDeCuotas: {
+        type: Number,
+        required: false // Número de cuotas
+    },
+    cuotas: [{
+        numeroCuota: {
+            type: Number,
+            required: false // Número de la cuota (1, 2, 3, ...)
+        },
+        estado: {
+            type: String,
+            enum: ['por_pagar', 'pagado'],
+            default: 'por_pagar',
+            required: false
+        },
+        monto: {
+            type: Number,
+            required: false // Monto de esta cuota
+        }
+    }],
     fechaCreacion: {
         type: Date,
         default: Date.now,

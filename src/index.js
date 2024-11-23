@@ -36,6 +36,9 @@ const ordenDespachoRoutes = require('../src/routes/ordenDespacho.routes.js');
 const seguimientoRoutes = require('../src/routes/seguimiento.routes.js');
 const facturaRoutes = require('../src/routes/factura.routes.js');
 const empleadoRoutes = require('../src/routes/empleado.routes.js');
+const reviewRoutes = require('../src/routes/review.routes.js');
+const formularioContactoRoutes = require('../src/routes/formularioContacto.routes');
+const subcontratoRoutes = require('../src/routes/subcontrato.routes');
 
 const app = express();
 app.set('PORT', process.env.PORT);
@@ -79,6 +82,9 @@ app.use("/api/v1/orden-despacho", ordenDespachoRoutes);
 app.use("/api/v1/seguimiento", seguimientoRoutes);
 app.use("/api/v1/factura", facturaRoutes);
 app.use("/api/v1/empleado", empleadoRoutes);
+app.use("/api/v1/review", reviewRoutes);
+app.use("/api/v1/formulario-contacto", formularioContactoRoutes);
+app.use("/api/v1/sub-contrato", subcontratoRoutes);
 
 //app.get('*', function(req, res){ res.status(404).json({message: 'ERROR 404'}) });
 

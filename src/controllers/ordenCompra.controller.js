@@ -556,6 +556,145 @@ async function verOrdenesListasParaDespacho(req, res) {
     }
 }
 
+const actualizarNumeroDeCuotas = async (req, res) => {
+    try {
+        const { ordenId } = req.params; // ID de la orden
+        const { numeroDeCuotas } = req.body; // Número de cuotas enviado
+
+        // Validar el número de cuotas
+        if (!numeroDeCuotas || numeroDeCuotas <= 0) {
+            return res.status(400).json({ message: 'El número de cuotas debe ser mayor a 0.' });
+        }
+
+        // Buscar la orden
+        const orden = await OrdenCompra.findById(ordenId);
+        if (!orden) {
+            return res.status(404).json({ message: 'Orden no encontrada.' });
+        }
+
+        // Calcular el monto de cada cuota
+        const montoPorCuota = Math.round(orden.precioFinalConIva / numeroDeCuotas);
+
+        // Limpiar cuotas anteriores y crear nuevas cuotas
+        orden.cuotas = [];
+        for (let i = 0; i < numeroDeCuotas; i++) {
+            orden.cuotas.push({
+                numeroCuota: i + 1,
+                estado: 'por_pagar', // Estado inicial
+                monto: montoPorCuota
+            });
+        }
+
+        // Actualizar el número de cuotas
+        orden.numeroDeCuotas = numeroDeCuotas;
+
+        // Guardar la orden actualizada
+        await orden.save();
+
+        return res.status(200).json({
+            message: 'Número de cuotas y montos actualizados automáticamente.',
+            orden
+        });
+    } catch (error) {
+        console.error('Error al actualizar las cuotas:', error);
+        return res.status(500).json({
+            message: 'Error al actualizar las cuotas.',
+            error: error.message
+        });
+    }
+};
+
+const actualizarEstadoCuota = async (req, res) => {
+    try {
+        const { ordenId, numeroCuota } = req.params; // ID de la orden y número de la cuota
+        const { estado } = req.body; // Estado proporcionado
+
+        // Validar que el estado sea válido
+        if (!['por_pagar', 'pagado'].includes(estado)) {
+            return res.status(400).json({ message: "El estado debe ser 'por_pagar' o 'pagado'." });
+        }
+
+        // Buscar la orden
+        const orden = await OrdenCompra.findById(ordenId);
+        if (!orden) {
+            return res.status(404).json({ message: 'Orden no encontrada.' });
+        }
+
+        // Buscar la cuota correspondiente
+        const cuota = orden.cuotas.find(c => c.numeroCuota === parseInt(numeroCuota));
+        if (!cuota) {
+            return res.status(404).json({ message: `No se encontró la cuota número ${numeroCuota}.` });
+        }
+
+        // Actualizar el estado de la cuota
+        cuota.estado = estado;
+
+        // Guardar la orden actualizada
+        await orden.save();
+
+        return res.status(200).json({
+            message: `Estado de la cuota número ${numeroCuota} actualizado correctamente.`,
+            orden
+        });
+    } catch (error) {
+        console.error('Error al actualizar el estado de la cuota:', error);
+        return res.status(500).json({
+            message: 'Error al actualizar el estado de la cuota.',
+            error: error.message
+        });
+    }
+};
+
+const verOrdenesCompraCuotas = async (req, res) => {
+    const { ordenId } = req.params;
+
+    // Validación del ID de la orden
+    if (!ordenId) {
+        return res.status(400).json({ message: 'El ID de la orden es requerido' });
+    }
+
+    if (ordenId.length !== 24) {
+        return res.status(400).json({ message: 'El ID de la orden no es válido' });
+    }
+
+    try {
+        // Buscar la orden por ID
+        const orden = await OrdenCompra.findById(ordenId)
+            .populate('empleado') // Popula el empleado si es necesario
+            .populate('cliente') // Popula el cliente si es necesario
+            .populate('seleccionProductos'); // Popula los productos si es necesario
+
+        // Verificamos si la orden existe
+        if (!orden) {
+            return res.status(404).json({ message: 'Orden de compra no encontrada' });
+        }
+
+        // Calculamos los detalles de las cuotas
+        const totalCuotas = orden.cuotas.length;
+        const cuotasPagadas = orden.cuotas.filter(cuota => cuota.estado === 'pagado').length;
+        const cuotasPorPagar = totalCuotas - cuotasPagadas;
+
+        // Formateamos el resultado
+        const resultado = {
+            numeroOrden: orden.numero,
+            cliente: orden.cliente, // Incluye el cliente si es necesario
+            precioTotalOrden: orden.precioTotalOrden,
+            precioFinalConIva: orden.precioFinalConIva,
+            numeroDeCuotas: orden.numeroDeCuotas,
+            detallesCuotas: {
+                totalCuotas,
+                cuotasPagadas,
+                cuotasPorPagar,
+                listaCuotas: orden.cuotas // Incluye el detalle de cada cuota
+            }
+        };
+
+        res.status(200).json(resultado);
+    } catch (error) {
+        console.error('Error al obtener la orden de compra:', error);
+        res.status(500).json({ message: 'Error interno del servidor' });
+    }
+};
 
 module.exports = {
     verOrdenesCompra,
@@ -569,5 +708,8 @@ module.exports = {
     verOrdenesCompraFiltrado,
     verOrdenesPorClienteYEstado,
     verOrdenesCompraSinFactura,
-    verOrdenesListasParaDespacho
+    verOrdenesListasParaDespacho,
+    actualizarNumeroDeCuotas,
+    actualizarEstadoCuota,
+    verOrdenesCompraCuotas
 };
