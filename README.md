@@ -1,6 +1,6 @@
 # API FOODCO 1.0
 
-API FOODCO es el backend diseñado para soportar la aplicación de venta de menus a empresas, basada en Next.js.
+API FOODCO es el backend diseñado para soportar la aplicación de venta de menus a empresas, basada en Angular.
 
 ## Empezando
 
