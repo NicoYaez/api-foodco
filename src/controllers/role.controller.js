@@ -1,6 +1,5 @@
-const Role = require('../models/role'); // Asegúrate de ajustar la ruta según tu estructura de carpetas
+const Role = require('../models/role');
 
-// Crear un nuevo rol
 const createRole = async (req, res) => {
     try {
         const { nombre } = req.body;
@@ -13,7 +12,6 @@ const createRole = async (req, res) => {
     }
 };
 
-// Obtener todos los roles
 const getRoles = async (req, res) => {
     try {
         const roles = await Role.find();
@@ -24,7 +22,6 @@ const getRoles = async (req, res) => {
     }
 };
 
-// Obtener un rol por ID
 const getRoleById = async (req, res) => {
     try {
         const role = await Role.findById(req.params.id);
@@ -36,7 +33,6 @@ const getRoleById = async (req, res) => {
     }
 };
 
-// Actualizar un rol
 const updateRole = async (req, res) => {
     try {
         const { nombre } = req.body;
@@ -49,7 +45,6 @@ const updateRole = async (req, res) => {
     }
 };
 
-// Eliminar un rol
 const deleteRole = async (req, res) => {
     try {
         const role = await Role.findByIdAndDelete(req.params.id);

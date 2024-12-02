@@ -85,38 +85,31 @@ const ordenDespachoSchema = new Schema({
     versionKey: false,
 });
 
-// Método para cambiar el estado y guardar el historial
 ordenDespachoSchema.methods.cambiarEstado = async function (nuevoEstado) {
     if (!estadosPosibles.includes(nuevoEstado)) {
         throw new Error('Estado no válido');
     }
 
-    // Actualizamos el estado actual
     this.estado = nuevoEstado;
 
-    // Agregamos el cambio al historial
     this.historialEstados.push({ estado: nuevoEstado });
 
-    // Guardamos el documento
     return this.save();
 };
 
-// Método para marcar la orden como completada automáticamente tras un período de tiempo
 ordenDespachoSchema.methods.marcarCompletadaAutomaticamente = function (dias) {
     const fechaLimite = new Date(this.fecha);
     fechaLimite.setDate(fechaLimite.getDate() + dias);
 
-    // Si la fecha actual supera la fecha límite y no está ya completado
     if (new Date() > fechaLimite && this.estado !== 'completado') {
         this.estado = 'completado';
-        this.historialEstados.push({ estado: 'completado' }); // Guardamos el cambio de estado en el historial
+        this.historialEstados.push({ estado: 'completado' });
         return this.save();
     }
     return this;
 };
 
 ordenDespachoSchema.methods.cambiarEstado = async function (nuevoEstado) {
-    // Verificar si el nuevo estado es el mismo que el actual
     if (this.estado === nuevoEstado) {
         throw new Error('El estado actual ya es el mismo que el nuevo estado. No se realizó ningún cambio.');
     }
@@ -125,13 +118,10 @@ ordenDespachoSchema.methods.cambiarEstado = async function (nuevoEstado) {
         throw new Error('Estado no válido');
     }
 
-    // Actualizamos el estado actual
     this.estado = nuevoEstado;
 
-    // Agregamos el cambio al historial
     this.historialEstados.push({ estado: nuevoEstado });
 
-    // Guardamos el documento
     return this.save();
 };
 

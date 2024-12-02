@@ -1,36 +1,33 @@
 const mongoose = require('mongoose');
-const { Schema, model } = mongoose;
 
-const camionSchema = new Schema({
-    placa: {
+const formularioContactoSchema = new mongoose.Schema({
+    nombre: {
         type: String,
         required: true
     },
-    marca: {
+    apellido: {
         type: String,
         required: true
     },
-    modelo: {
+    email: {
         type: String,
         required: true
     },
-    color: {
+    telefono: {
         type: String,
         required: true
     },
-    año: {
-        type: Number,
-        required: true
-    },
-    tipo: {
+    asunto: {
         type: String,
         required: true
     },
-    sucursal: {
-        type: Schema.Types.ObjectId,
-        ref: 'Sucursal',
+    mensaje: {
+        type: String,
         required: true
     }
+}, {
+    timestamps: true,
+    versionKey: false
 });
 
-module.exports = model("Camion", camionSchema);
+module.exports = mongoose.model('FormularioContacto', formularioContactoSchema);

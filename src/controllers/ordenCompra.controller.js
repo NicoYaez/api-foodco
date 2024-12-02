@@ -7,40 +7,40 @@ async function verOrdenesCompra(req, res) {
     try {
         const ordenes = await OrdenCompra.find()
             .populate({
-                path: 'cliente',  // Populamos el campo cliente
+                path: 'cliente',
                 populate: [
                     {
-                        path: 'empresa',  // Populamos la referencia a Empresa dentro de Cliente
+                        path: 'empresa',
                         model: 'Empresa',
                         populate: {
-                            path: 'rubro',  // Populamos la referencia a Rubro dentro de Empresa
-                            model: 'Rubro',  // Asegúrate de que 'Rubro' es el nombre correcto del modelo
-                            select: 'nombre'  // Seleccionamos solo el nombre de Rubro
+                            path: 'rubro',
+                            model: 'Rubro',
+                            select: 'nombre'
                         }
                     },
                     {
-                        path: 'sucursal',  // Populamos la referencia a Sucursal dentro de Cliente
-                        model: 'Sucursal'  // Asegúrate de que 'Sucursal' es el nombre correcto de tu modelo
+                        path: 'sucursal',
+                        model: 'Sucursal'
                     },
                     {
-                        path: 'contacto',  // Populamos la referencia a Contacto dentro de Cliente
-                        model: 'Contacto'  // Asegúrate de que 'Contacto' es el nombre correcto de tu modelo
+                        path: 'contacto',
+                        model: 'Contacto'
                     }
                 ]
             })
-            .populate('empleado')  // Populamos el empleado relacionado
+            .populate('empleado')
             .populate({
-                path: 'seleccionProductos',  // Populamos la selección de productos
+                path: 'seleccionProductos',
                 populate: {
-                    path: 'productos.producto',  // Aquí se hace el populate de los productos dentro de seleccionProductos
-                    model: 'Producto'  // Asegúrate de que 'Producto' es el nombre correcto de tu modelo
+                    path: 'productos.producto',
+                    model: 'Producto'
                 }
             })
             .populate({
                 path: 'seleccionProductos',
                 populate: {
-                    path: 'productos.producto.ingrediente',  // Populamos el ingrediente dentro de cada producto
-                    model: 'Ingrediente'  // Asegúrate de que 'Ingrediente' es el nombre correcto de tu modelo
+                    path: 'productos.producto.ingrediente',
+                    model: 'Ingrediente'
                 }
             });
 
@@ -65,8 +65,8 @@ async function verOrdenesPorCliente(req, res) {
             .populate({
                 path: 'seleccionProductos',
                 populate: {
-                    path: 'productos.producto',  // Aquí se hace el populate de los productos dentro de seleccionProductos
-                    model: 'Producto'  // Asegúrate de que 'Producto' es el nombre del modelo de productos
+                    path: 'productos.producto',
+                    model: 'Producto'
                 }
             });
 
@@ -85,53 +85,50 @@ const verOrdenCompraPorId = async (req, res) => {
     try {
         const { id } = req.params;
 
-        // Buscar la orden de compra por su ID
         const orden = await OrdenCompra.findById(id)
             .populate({
-                path: 'cliente',  // Populamos el campo cliente
+                path: 'cliente',
                 populate: [
                     {
-                        path: 'empresa',  // Populamos la referencia a Empresa dentro de Cliente
+                        path: 'empresa',
                         model: 'Empresa',
                         populate: {
-                            path: 'rubro',  // Populamos la referencia a Rubro dentro de Empresa
-                            model: 'Rubro',  // Asegúrate de que 'Rubro' es el nombre correcto del modelo
-                            select: 'nombre'  // Seleccionamos solo el nombre del Rubro
+                            path: 'rubro',
+                            model: 'Rubro',
+                            select: 'nombre'
                         }
                     },
                     {
-                        path: 'sucursal',  // Populamos la referencia a Sucursal dentro de Cliente
+                        path: 'sucursal',
                         model: 'Sucursal'
                     },
                     {
-                        path: 'contacto',  // Populamos la referencia a Contacto dentro de Cliente
+                        path: 'contacto',
                         model: 'Contacto'
                     }
                 ]
             })
-            .populate('empleado')  // Populamos el empleado relacionado
+            .populate('empleado')
             .populate({
-                path: 'seleccionProductos',  // Populamos la selección de productos
+                path: 'seleccionProductos',
                 populate: {
-                    path: 'productos.producto',  // Populamos los productos dentro de seleccionProductos
+                    path: 'productos.producto',
                     model: 'Producto'
                 }
             })
             .populate({
                 path: 'seleccionProductos',
                 populate: {
-                    path: 'productos.producto.ingredientes.ingrediente',  // Populamos los ingredientes dentro de los productos
-                    model: 'Ingrediente',  // Asegúrate de que 'Ingrediente' es el nombre correcto del modelo
-                    select: 'nombre descripcion'  // Seleccionamos campos específicos, como el nombre y la descripción
+                    path: 'productos.producto.ingredientes.ingrediente',
+                    model: 'Ingrediente',
+                    select: 'nombre descripcion'
                 }
             });
 
-        // Verificar si se encontró la orden
         if (!orden) {
             return res.status(404).json({ message: `Orden de compra con id ${id} no encontrada` });
         }
 
-        // Responder con la orden encontrada
         return res.status(200).json(orden);
     } catch (error) {
         console.error('Error al obtener la orden de compra:', error);
@@ -139,24 +136,25 @@ const verOrdenCompraPorId = async (req, res) => {
     }
 };
 
-async function actualizarEstadoOrden(req, res) {
+const actualizarEstadoOrden = async (req, res) => {
     try {
         const { nuevoEstado, empleadoId } = req.body;
         const { ordenId } = req.params;
 
-        // Verificar si la orden existe
         const orden = await OrdenCompra.findById(ordenId);
         if (!orden) {
             return res.status(404).json({ message: 'Orden no encontrada' });
         }
 
-        // Verificar si el empleado existe
+        if (!nuevoEstado || !empleadoId) {
+            return res.status(400).json({ message: 'El nuevo estado y el ID del empleado son requeridos' });
+        }
+
         const empleado = await Empleado.findById(empleadoId);
         if (!empleado) {
             return res.status(404).json({ message: 'Empleado no encontrado' });
         }
 
-        // Registrar el cambio de estado
         const cambioEstado = {
             estadoAnterior: orden.estado,
             estadoNuevo: nuevoEstado,
@@ -164,16 +162,13 @@ async function actualizarEstadoOrden(req, res) {
             fechaCambio: new Date()
         };
 
-        // Si es el primer cambio, asignar al empleado responsable
         if (!orden.empleado) {
             orden.empleado = empleado._id;
         }
 
-        // Actualizar el estado y guardar el historial de cambios
         orden.estado = nuevoEstado;
         orden.historialCambios.push(cambioEstado);
 
-        // Guardar la orden con los cambios
         await orden.save();
 
         res.status(200).json({
@@ -194,24 +189,21 @@ async function verOrdenesPorEmpleado(req, res) {
             return res.status(400).json({ message: 'El ID del empleado es requerido' });
         }
 
-        // Buscar órdenes de compra asignadas al empleado que NO estén en estado "completado"
         const ordenes = await OrdenCompra.find({ empleado: empleadoId, estado: { $ne: 'completado' } })
-            .populate('cliente')  // Información del cliente
-            .populate('empleado')  // Información del empleado que realizó la orden
+            .populate('cliente')
+            .populate('empleado')
             .populate({
                 path: 'seleccionProductos',
                 populate: {
-                    path: 'productos.producto',  // Poblamos los productos dentro de seleccionProductos
-                    model: 'Producto'  // Nombre del modelo de productos
+                    path: 'productos.producto',
+                    model: 'Producto'
                 }
             });
 
-        // Si no se encuentran órdenes asignadas al empleado que cumplan el filtro
         if (ordenes.length === 0) {
             return res.status(404).json({ message: 'No se encontraron órdenes activas para este empleado' });
         }
 
-        // Responder con las órdenes encontradas
         res.status(200).json(ordenes);
     } catch (error) {
         console.error('Error al obtener las órdenes de compra por empleado:', error);
@@ -227,24 +219,21 @@ async function verOrdenesCompletadasPorEmpleado(req, res) {
             return res.status(400).json({ message: 'El ID del empleado es requerido' });
         }
 
-        // Buscar órdenes de compra asignadas al empleado que estén en estado "completado"
         const ordenes = await OrdenCompra.find({ empleado: empleadoId, estado: 'completado' })
-            .populate('cliente')  // Información del cliente
-            .populate('empleado')  // Información del empleado que realizó la orden
+            .populate('cliente')
+            .populate('empleado')
             .populate({
                 path: 'seleccionProductos',
                 populate: {
-                    path: 'productos.producto',  // Poblamos los productos dentro de seleccionProductos
-                    model: 'Producto'  // Nombre del modelo de productos
+                    path: 'productos.producto',
+                    model: 'Producto'
                 }
             });
 
-        // Si no se encuentran órdenes completadas asignadas al empleado
         if (ordenes.length === 0) {
             return res.status(404).json({ message: 'No se encontraron órdenes completadas para este empleado' });
         }
 
-        // Responder con las órdenes encontradas
         res.status(200).json(ordenes);
     } catch (error) {
         console.error('Error al obtener las órdenes completadas por empleado:', error);
@@ -254,32 +243,28 @@ async function verOrdenesCompletadasPorEmpleado(req, res) {
 
 async function verOrdenesPorEstado(req, res) {
     try {
-        const { estado } = req.query;  // Obtener el estado de la consulta (query)
+        const { estado } = req.query;
 
-        // Construimos el filtro dependiendo si el estado es proporcionado o no
         const filtro = {};
         if (estado) {
-            filtro.estado = estado;  // Agregar el filtro de estado si es proporcionado
+            filtro.estado = estado;
         }
 
-        // Buscar órdenes de compra filtradas por estado (si se proporcionó) o traer todas
         const ordenes = await OrdenCompra.find(filtro)
-            .populate('cliente')  // Información del cliente
-            .populate('empleado')  // Información del empleado que realizó la orden
+            .populate('cliente')
+            .populate('empleado')
             .populate({
                 path: 'seleccionProductos',
                 populate: {
-                    path: 'productos.producto',  // Poblamos los productos dentro de seleccionProductos
-                    model: 'Producto'  // Nombre del modelo de productos
+                    path: 'productos.producto',
+                    model: 'Producto'
                 }
             });
 
-        // Si no se encuentran órdenes que cumplan el filtro
         if (ordenes.length === 0) {
             return res.status(404).json({ message: 'No se encontraron órdenes para el estado proporcionado' });
         }
 
-        // Responder con las órdenes encontradas
         res.status(200).json(ordenes);
     } catch (error) {
         console.error('Error al obtener las órdenes de compra por estado:', error);
@@ -289,30 +274,26 @@ async function verOrdenesPorEstado(req, res) {
 
 async function actualizarOrdenCompra(req, res) {
     try {
-        const { ordenId } = req.params;  // Obtener el ID de la orden
-        const actualizaciones = req.body;  // Obtener los campos a actualizar desde el cuerpo de la solicitud
+        const { ordenId } = req.params;
+        const actualizaciones = req.body;
 
-        // Verificar si la orden existe
         const orden = await OrdenCompra.findById(ordenId);
         if (!orden) {
             return res.status(404).json({ message: 'Orden no encontrada' });
         }
 
-        // Actualizar solo los campos proporcionados
         if (actualizaciones.estado) {
             const cambioEstado = {
                 estadoAnterior: orden.estado,
                 estadoNuevo: actualizaciones.estado,
-                empleado: actualizaciones.empleadoId || orden.empleado,  // Asignar empleado si se proporciona
+                empleado: actualizaciones.empleadoId || orden.empleado,
                 fechaCambio: new Date()
             };
 
-            // Agregar el historial de cambio de estado
             orden.historialCambios.push(cambioEstado);
-            orden.estado = actualizaciones.estado;  // Actualizar el estado
+            orden.estado = actualizaciones.estado;
         }
 
-        // Actualizar otros campos si están presentes en el cuerpo de la solicitud
         if (actualizaciones.cliente) {
             const cliente = await Cliente.findById(actualizaciones.cliente);
             if (!cliente) {
@@ -329,15 +310,12 @@ async function actualizarOrdenCompra(req, res) {
             orden.fechaRequerida = actualizaciones.fechaRequerida;
         }
 
-        // Calcular el precio nuevamente si se ha actualizado la selección de productos
         if (actualizaciones.seleccionProductos) {
-            await orden.save();  // Guardar los cambios para recalcular los precios (gracias a los hooks)
+            await orden.save();
         }
 
-        // Guardar los cambios en la orden
         await orden.save();
 
-        // Devolver la orden actualizada
         res.status(200).json({
             message: 'Orden actualizada exitosamente',
             orden
@@ -350,39 +328,37 @@ async function actualizarOrdenCompra(req, res) {
 
 async function verOrdenesCompraFiltrado(req, res) {
     try {
-        const { periodo } = req.params;  // Obtenemos el periodo desde los query params
-        const now = new Date();  // Fecha actual
-        let startDate;  // Fecha de inicio para el filtro
+        const { periodo } = req.params;
+        const now = new Date();
+        let startDate;
 
-        // Definir la fecha de inicio basada en el período seleccionado
         switch (periodo) {
             case 'diario':
-                startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());  // Hoy
+                startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
                 break;
             case 'semanal':
-                startDate = new Date(now.setDate(now.getDate() - now.getDay()));  // Primer día de la semana (domingo)
+                startDate = new Date(now.setDate(now.getDate() - now.getDay()));
                 break;
             case 'bisemanal':
-                startDate = new Date(now.setDate(now.getDate() - (now.getDay() + 7)));  // Dos semanas atrás
+                startDate = new Date(now.setDate(now.getDate() - (now.getDay() + 7)));
                 break;
             case 'mensual':
-                startDate = new Date(now.getFullYear(), now.getMonth(), 1);  // Primer día del mes
+                startDate = new Date(now.getFullYear(), now.getMonth(), 1);
                 break;
             case 'trimestral':
-                const currentMonth = now.getMonth() + 1;  // Mes actual (0-indexado, por lo que sumamos 1)
-                const currentQuarter = Math.floor((currentMonth - 1) / 3) + 1;  // Trimestre actual
-                startDate = new Date(now.getFullYear(), (currentQuarter - 1) * 3, 1);  // Primer día del trimestre
+                const currentMonth = now.getMonth() + 1;
+                const currentQuarter = Math.floor((currentMonth - 1) / 3) + 1;
+                startDate = new Date(now.getFullYear(), (currentQuarter - 1) * 3, 1);
                 break;
             case 'semestral':
-                const currentSemester = Math.floor((now.getMonth() + 1 - 1) / 6) + 1;  // Semestre actual
-                startDate = new Date(now.getFullYear(), (currentSemester - 1) * 6, 1);  // Primer día del semestre
+                const currentSemester = Math.floor((now.getMonth() + 1 - 1) / 6) + 1;
+                startDate = new Date(now.getFullYear(), (currentSemester - 1) * 6, 1);
                 break;
             default:
-                startDate = null;  // Si no se selecciona período, no filtramos por fecha
+                startDate = null;
         }
 
-        // Crear la consulta con el filtro de fecha
-        const query = startDate ? { createdAt: { $gte: startDate } } : {};  // Aplicamos el filtro solo si tenemos una startDate
+        const query = startDate ? { createdAt: { $gte: startDate } } : {};
 
         const ordenes = await OrdenCompra.find(query)
             .populate({
@@ -423,7 +399,6 @@ async function verOrdenesCompraFiltrado(req, res) {
                 }
             });
 
-        // Verificamos si no hay órdenes y enviamos un mensaje adecuado
         if (ordenes.length === 0) {
             return res.status(200).json({ message: `No se encontraron órdenes de compra para el período ${periodo}.` });
         }
@@ -437,13 +412,12 @@ async function verOrdenesCompraFiltrado(req, res) {
 
 async function verOrdenesPorClienteYEstado(req, res) {
     try {
-        const { clienteId } = req.params; // Obtener el clienteId de los parámetros de la ruta
-        const { estado } = req.query;     // Obtener el estado de la consulta (query)
+        const { clienteId } = req.params;
+        const { estado } = req.query;
 
-        // Construimos el filtro dependiendo de si clienteId y/o estado son proporcionados
         const filtro = {};
         if (clienteId) {
-            filtro.cliente = clienteId; // Agregar filtro por cliente si es proporcionado
+            filtro.cliente = clienteId;
         }
         if (estado && estado !== 'no-completado' && estado !== 'completado') {
             filtro.estado = estado;
@@ -453,24 +427,21 @@ async function verOrdenesPorClienteYEstado(req, res) {
             filtro.estado = { $nin: ['entregado', 'rechazado', 'completado'] };
         }
 
-        // Buscar órdenes de compra filtradas por cliente y estado (si se proporcionaron)
         const ordenes = await OrdenCompra.find(filtro)
-            .populate('cliente')  // Información del cliente
-            .populate('empleado')  // Información del empleado que realizó la orden
+            .populate('cliente')
+            .populate('empleado')
             .populate({
                 path: 'seleccionProductos',
                 populate: {
-                    path: 'productos.producto',  // Poblamos los productos dentro de seleccionProductos
-                    model: 'Producto'  // Nombre del modelo de productos
+                    path: 'productos.producto',
+                    model: 'Producto'
                 }
             });
 
-        // Si no se encuentran órdenes que cumplan el filtro
         if (ordenes.length === 0) {
             return res.status(404).json({ message: 'No se encontraron órdenes con los criterios proporcionados' });
         }
 
-        // Responder con las órdenes encontradas
         res.status(200).json(ordenes);
     } catch (error) {
         console.error('Error al obtener las órdenes de compra por cliente y estado:', error);
@@ -480,11 +451,9 @@ async function verOrdenesPorClienteYEstado(req, res) {
 
 async function verOrdenesCompraSinFactura(req, res) {
     try {
-        // Obtener los IDs de las órdenes de compra que ya tienen una factura
-        const facturas = await Factura.find().select('ordenCompra'); // Obtiene solo el campo de ordenCompra
+        const facturas = await Factura.find().select('ordenCompra');
         const ordenesConFacturaIds = facturas.map(factura => factura.ordenCompra.toString());
 
-        // Filtrar las órdenes de compra que no están en la lista de IDs de órdenes con factura
         const ordenesSinFactura = await OrdenCompra.find({ _id: { $nin: ordenesConFacturaIds } })
             .populate({
                 path: 'cliente',
@@ -527,28 +496,24 @@ async function verOrdenesCompraSinFactura(req, res) {
 
 async function verOrdenesListasParaDespacho(req, res) {
     try {
-        // Definir el filtro para estado "listo_para_despachar"
         const filtro = { estado: 'listo_para_despachar' };
 
-        // Buscar órdenes de compra con estado "listo_para_despachar" y ordenarlas por fechaRequerida
         const ordenes = await OrdenCompra.find(filtro)
-            .sort({ fechaRequerida: 1 }) // Ordena por fechaRequerida en orden ascendente (más urgente primero)
-            .populate('cliente')  // Información del cliente
-            .populate('empleado')  // Información del empleado que realizó la orden
+            .sort({ fechaRequerida: 1 })
+            .populate('cliente')
+            .populate('empleado')
             .populate({
                 path: 'seleccionProductos',
                 populate: {
-                    path: 'productos.producto',  // Poblamos los productos dentro de seleccionProductos
-                    model: 'Producto'  // Nombre del modelo de productos
+                    path: 'productos.producto',
+                    model: 'Producto'
                 }
             });
 
-        // Si no se encuentran órdenes que cumplan el filtro
         if (ordenes.length === 0) {
             return res.status(404).json({ message: 'No se encontraron órdenes con estado listo_para_despachar' });
         }
 
-        // Responder con las órdenes encontradas
         res.status(200).json(ordenes);
     } catch (error) {
         console.error('Error al obtener las órdenes listas para despacho:', error);
@@ -556,6 +521,129 @@ async function verOrdenesListasParaDespacho(req, res) {
     }
 }
 
+const actualizarNumeroDeCuotas = async (req, res) => {
+    try {
+        const { ordenId } = req.params;
+        const { numeroDeCuotas } = req.body;
+
+        if (!numeroDeCuotas || numeroDeCuotas <= 0) {
+            return res.status(400).json({ message: 'El número de cuotas debe ser mayor a 0.' });
+        }
+
+        const orden = await OrdenCompra.findById(ordenId);
+        if (!orden) {
+            return res.status(404).json({ message: 'Orden no encontrada.' });
+        }
+
+        const montoPorCuota = Math.round(orden.precioFinalConIva / numeroDeCuotas);
+
+        orden.cuotas = [];
+        for (let i = 0; i < numeroDeCuotas; i++) {
+            orden.cuotas.push({
+                numeroCuota: i + 1,
+                estado: 'por_pagar',
+                monto: montoPorCuota
+            });
+        }
+
+        orden.numeroDeCuotas = numeroDeCuotas;
+
+        await orden.save();
+
+        return res.status(200).json({
+            message: 'Número de cuotas y montos actualizados automáticamente.',
+            orden
+        });
+    } catch (error) {
+        console.error('Error al actualizar las cuotas:', error);
+        return res.status(500).json({
+            message: 'Error al actualizar las cuotas.',
+            error: error.message
+        });
+    }
+};
+
+const actualizarEstadoCuota = async (req, res) => {
+    try {
+        const { ordenId, numeroCuota } = req.params;
+        const { estado } = req.body;
+
+        if (!['por_pagar', 'pagado'].includes(estado)) {
+            return res.status(400).json({ message: "El estado debe ser 'por_pagar' o 'pagado'." });
+        }
+
+        const orden = await OrdenCompra.findById(ordenId);
+        if (!orden) {
+            return res.status(404).json({ message: 'Orden no encontrada.' });
+        }
+
+        const cuota = orden.cuotas.find(c => c.numeroCuota === parseInt(numeroCuota));
+        if (!cuota) {
+            return res.status(404).json({ message: `No se encontró la cuota número ${numeroCuota}.` });
+        }
+
+        cuota.estado = estado;
+
+        await orden.save();
+
+        return res.status(200).json({
+            message: `Estado de la cuota número ${numeroCuota} actualizado correctamente.`,
+            orden
+        });
+    } catch (error) {
+        console.error('Error al actualizar el estado de la cuota:', error);
+        return res.status(500).json({
+            message: 'Error al actualizar el estado de la cuota.',
+            error: error.message
+        });
+    }
+};
+
+const verOrdenesCompraCuotas = async (req, res) => {
+    const { ordenId } = req.params;
+
+    if (!ordenId) {
+        return res.status(400).json({ message: 'El ID de la orden es requerido' });
+    }
+
+    if (ordenId.length !== 24) {
+        return res.status(400).json({ message: 'El ID de la orden no es válido' });
+    }
+
+    try {
+        const orden = await OrdenCompra.findById(ordenId)
+            .populate('empleado')
+            .populate('cliente')
+            .populate('seleccionProductos');
+
+        if (!orden) {
+            return res.status(404).json({ message: 'Orden de compra no encontrada' });
+        }
+
+        const totalCuotas = orden.cuotas.length;
+        const cuotasPagadas = orden.cuotas.filter(cuota => cuota.estado === 'pagado').length;
+        const cuotasPorPagar = totalCuotas - cuotasPagadas;
+
+        const resultado = {
+            numeroOrden: orden.numero,
+            cliente: orden.cliente,
+            precioTotalOrden: orden.precioTotalOrden,
+            precioFinalConIva: orden.precioFinalConIva,
+            numeroDeCuotas: orden.numeroDeCuotas,
+            detallesCuotas: {
+                totalCuotas,
+                cuotasPagadas,
+                cuotasPorPagar,
+                listaCuotas: orden.cuotas
+            }
+        };
+
+        res.status(200).json(resultado);
+    } catch (error) {
+        console.error('Error al obtener la orden de compra:', error);
+        res.status(500).json({ message: 'Error interno del servidor' });
+    }
+};
 
 module.exports = {
     verOrdenesCompra,
@@ -569,5 +657,8 @@ module.exports = {
     verOrdenesCompraFiltrado,
     verOrdenesPorClienteYEstado,
     verOrdenesCompraSinFactura,
-    verOrdenesListasParaDespacho
+    verOrdenesListasParaDespacho,
+    actualizarNumeroDeCuotas,
+    actualizarEstadoCuota,
+    verOrdenesCompraCuotas
 };

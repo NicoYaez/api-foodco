@@ -2,58 +2,53 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs-extra');
 const sharp = require('sharp');
-const crypto = require('crypto'); // Para generar un nombre aleatorio
+const crypto = require('crypto');
 
-// Directorios de almacenamiento
 const publicDir = path.join(__dirname, '..', 'public/images');
 const profileDir = path.join(__dirname, '..', 'public/images/profile');
 const pdfDir = path.join(__dirname, '..', 'public/uploads/facturas');
 
-// Crear los directorios si no existen
 fs.ensureDirSync(publicDir);
 fs.ensureDirSync(profileDir);
 fs.ensureDirSync(pdfDir);
 
-// Función para generar un nombre aleatorio
 const generateUniqueFileName = () => {
-  return crypto.randomBytes(16).toString('hex'); // Genera un nombre aleatorio de 16 bytes en formato hexadecimal
+  return crypto.randomBytes(16).toString('hex');
 };
 
-// Configuración de almacenamiento con multer
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, publicDir); // Carpeta donde se guardarán temporalmente las imágenes
+    cb(null, publicDir);
   },
   filename: function (req, file, cb) {
-    const newFileName = generateUniqueFileName(); // Generar un nombre aleatorio
-    cb(null, newFileName); // Asignar el nuevo nombre sin extensión
+    const newFileName = generateUniqueFileName();
+    cb(null, newFileName);
   }
 });
 
 const storageProfile = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, profileDir); // Carpeta donde se guardarán las imágenes de perfil
+    cb(null, profileDir);
   },
   filename: function (req, file, cb) {
-    const newFileName = generateUniqueFileName(); // Generar un nombre aleatorio
-    cb(null, newFileName); // Asignar el nuevo nombre sin extensión
+    const newFileName = generateUniqueFileName();
+    cb(null, newFileName);
   }
 });
 
 const storageFacturas = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, pdfDir); // Carpeta para los archivos PDF
+    cb(null, pdfDir);
   },
   filename: function (req, file, cb) {
-    const newFileName = `${generateUniqueFileName()}.pdf`; // Genera un nombre aleatorio y agrega .pdf
+    const newFileName = `${generateUniqueFileName()}.pdf`;
     cb(null, newFileName);
   }
 });
 
-// Configuración de multer
 const upload = multer({
   storage: storage,
-  limits: { fileSize: 1024 * 1024 * 100 }, // Limita el tamaño a 100MB
+  limits: { fileSize: 1024 * 1024 * 100 },
   fileFilter: (req, file, cb) => {
     const filetypes = /jpeg|jpg|png|webp/;
     const mimetype = filetypes.test(file.mimetype);
@@ -63,11 +58,11 @@ const upload = multer({
     }
     cb(new Error('El archivo debe ser una imagen válida (jpeg, jpg, png).'));
   }
-}).array('imagenes', 5); // Manejar hasta 5 imágenes
+}).array('imagenes', 5);
 
 const uploadProfile = multer({
   storage: storageProfile,
-  limits: { fileSize: 1024 * 1024 * 5 }, // Limita el tamaño a 5MB
+  limits: { fileSize: 1024 * 1024 * 5 },
   fileFilter: (req, file, cb) => {
     const filetypes = /jpeg|jpg|png|webp/;
     const mimetype = filetypes.test(file.mimetype);
@@ -77,11 +72,11 @@ const uploadProfile = multer({
     }
     cb(new Error('El archivo debe ser una imagen válida (jpeg, jpg, png).'));
   }
-}).single('imagenPerfil'); // Solo una imagen de perfil
+}).single('imagenPerfil');
 
 const uploadPDF = multer({
   storage: storageFacturas,
-  limits: { fileSize: 1024 * 1024 * 100 }, // Limitar tamaño a 100MB
+  limits: { fileSize: 1024 * 1024 * 100 },
   fileFilter: (req, file, cb) => {
     const mimetype = file.mimetype === 'application/pdf';
     if (mimetype) {
@@ -89,9 +84,8 @@ const uploadPDF = multer({
     }
     cb(new Error('El archivo debe ser un PDF.'));
   }
-}).single('file'); // Aceptar solo un archivo PDF
+}).single('file');
 
-// Middleware para procesar las imágenes y convertirlas a WebP
 const uploadAndConvertToWebP = (req, res, next) => {
   upload(req, res, function (err) {
     if (err instanceof multer.MulterError) {
@@ -100,33 +94,28 @@ const uploadAndConvertToWebP = (req, res, next) => {
       return res.status(400).json({ message: err.message });
     }
 
-    // Verificar si se subieron imágenes
     if (!req.files || req.files.length === 0) {
       return res.status(400).json({ message: 'Por favor, sube al menos una imagen.' });
     }
 
-    // Procesar cada archivo y convertirlo a WebP
     const conversionPromises = req.files.map(file => {
       const filePath = path.join(publicDir, file.filename);
-      const outputFilePath = path.join(publicDir, `${file.filename}.webp`); // Agregar solo .webp al nuevo nombre
+      const outputFilePath = path.join(publicDir, `${file.filename}.webp`);
 
       return sharp(filePath)
-        .webp({ quality: 80 }) // Ajusta la calidad según tus necesidades
+        .webp({ quality: 80 })
         .toFile(outputFilePath)
         .then(() => {
-          // Eliminar la imagen original (jpeg, jpg, png)
           fs.unlinkSync(filePath);
 
-          // Actualizar el archivo con la nueva ruta y extensión .webp
           file.path = outputFilePath;
-          file.filename = path.basename(outputFilePath); // Actualizar el nombre a .webp
+          file.filename = path.basename(outputFilePath);
         });
     });
 
-    // Esperar a que todas las conversiones se completen
     Promise.all(conversionPromises)
       .then(() => {
-        next(); // Continuar con el siguiente middleware/controlador
+        next();
       })
       .catch(error => {
         return res.status(500).json({ message: 'Error al procesar las imágenes.' });
@@ -142,7 +131,6 @@ const uploadAndResizeProfileImage = (req, res, next) => {
       return res.status(400).json({ message: err.message });
     }
 
-    // Verificar si se subió una imagen
     if (!req.file) {
       return res.status(400).json({ message: 'Por favor, sube una imagen de perfil.' });
     }
@@ -150,20 +138,16 @@ const uploadAndResizeProfileImage = (req, res, next) => {
     const filePath = path.join(profileDir, req.file.filename);
     const outputFilePath = path.join(profileDir, `${req.file.filename}.webp`);
 
-    // Redimensionar a 300x300 píxeles y convertir a WebP
     sharp(filePath)
-      .resize(300, 300) // Redimensionar a 300x300 píxeles
-      .webp({ quality: 80 }) // Convertir a WebP con calidad 80
+      .resize(300, 300)
+      .webp({ quality: 80 })
       .toFile(outputFilePath)
       .then(() => {
-        // Eliminar la imagen original (jpeg, jpg, png)
         fs.unlinkSync(filePath);
-
-        // Actualizar la información del archivo con la nueva ruta y extensión .webp
         req.file.path = outputFilePath;
-        req.file.filename = path.basename(outputFilePath); // Actualizar el nombre a .webp
+        req.file.filename = path.basename(outputFilePath);
 
-        next(); // Continuar con el siguiente middleware/controlador
+        next();
       })
       .catch(error => {
         return res.status(500).json({ message: 'Error al procesar la imagen.' });

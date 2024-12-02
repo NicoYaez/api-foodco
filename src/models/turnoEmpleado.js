@@ -4,7 +4,7 @@ const { Schema, model } = mongoose;
 const turnoEmpleadoSchema = new Schema({
     empleado_id: {
         type: Schema.Types.ObjectId,
-        ref: 'Empleado',  // Relación con el modelo de empleados
+        ref: 'Empleado',
         required: true
     },
     fecha: {
@@ -12,16 +12,16 @@ const turnoEmpleadoSchema = new Schema({
         required: true
     },
     hora_inicio: {
-        type: String,  // Ejemplo: '08:00'
+        type: String,
         required: true
     },
     hora_fin: {
-        type: String,  // Ejemplo: '16:00'
+        type: String,
         required: true
     }
 }, {
-    timestamps: true,  // Agrega `createdAt` y `updatedAt`
-    versionKey: false  // Desactiva `__v`
+    timestamps: true,
+    versionKey: false
 });
 
 module.exports = model('TurnoEmpleado', turnoEmpleadoSchema);

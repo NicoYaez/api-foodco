@@ -1,10 +1,8 @@
 const TipoProducto = require('../models/tipoProducto');
 
-// Crear un nuevo tipo de producto
 const createTipoProducto = async (req, res) => {
     const { nombre } = req.body;
 
-    // Validación manual
     if (!nombre || typeof nombre !== 'string' || nombre.trim().length < 3) {
         return res.status(400).json({ error: 'El nombre es obligatorio y debe tener al menos 3 caracteres.' });
     }
@@ -18,7 +16,6 @@ const createTipoProducto = async (req, res) => {
     }
 };
 
-// Obtener todos los tipos de productos
 const getAllTiposProductos = async (req, res) => {
     try {
         const tiposProductos = await TipoProducto.find();
@@ -28,7 +25,6 @@ const getAllTiposProductos = async (req, res) => {
     }
 };
 
-// Obtener un tipo de producto por ID
 const getTipoProductoById = async (req, res) => {
     const { id } = req.params;
     try {
@@ -42,12 +38,10 @@ const getTipoProductoById = async (req, res) => {
     }
 };
 
-// Actualizar un tipo de producto por ID
 const updateTipoProducto = async (req, res) => {
     const { id } = req.params;
     const { nombre } = req.body;
 
-    // Validación manual
     if (!nombre || typeof nombre !== 'string' || nombre.trim().length < 3) {
         return res.status(400).json({ error: 'El nombre es obligatorio y debe tener al menos 3 caracteres.' });
     }
@@ -63,7 +57,6 @@ const updateTipoProducto = async (req, res) => {
     }
 };
 
-// Eliminar un tipo de producto por ID
 const deleteTipoProducto = async (req, res) => {
     const { id } = req.params;
     try {

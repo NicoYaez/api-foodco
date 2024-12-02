@@ -1,15 +1,13 @@
 const Departamento = require('../models/departamento'); // Asegúrate de que la ruta sea correcta
 
-// Crear un nuevo departamento
 const crearDepartamento = async (req, res) => {
     try {
         const { nombre } = req.body;
 
-        if(!nombre) {
+        if (!nombre) {
             return res.status(400).json({ message: 'El nombre del departamento es requerido' });
         }
 
-        // Verificar si ya existe un departamento con el mismo nombre
         const departamentoExistente = await Departamento.findOne({ nombre });
         if (departamentoExistente) {
             return res.status(400).json({ message: 'El departamento ya existe' });
@@ -28,7 +26,6 @@ const crearDepartamento = async (req, res) => {
     }
 };
 
-// Obtener todos los departamentos
 const obtenerDepartamentos = async (req, res) => {
     try {
         const departamentos = await Departamento.find();
@@ -39,7 +36,6 @@ const obtenerDepartamentos = async (req, res) => {
     }
 };
 
-// Obtener un departamento por ID
 const obtenerDepartamentoPorId = async (req, res) => {
     try {
         const { id } = req.params;
@@ -56,7 +52,6 @@ const obtenerDepartamentoPorId = async (req, res) => {
     }
 };
 
-// Actualizar un departamento por ID
 const actualizarDepartamento = async (req, res) => {
     try {
         const { id } = req.params;
@@ -65,7 +60,7 @@ const actualizarDepartamento = async (req, res) => {
         const departamento = await Departamento.findByIdAndUpdate(
             id,
             { nombre },
-            { new: true } // Retorna el documento actualizado
+            { new: true }
         );
 
         if (!departamento) {
@@ -82,7 +77,6 @@ const actualizarDepartamento = async (req, res) => {
     }
 };
 
-// Eliminar un departamento por ID
 const eliminarDepartamento = async (req, res) => {
     try {
         const { id } = req.params;

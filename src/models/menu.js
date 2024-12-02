@@ -33,7 +33,7 @@ const menuSchema = new mongoose.Schema({
     dieta: {
         type: String,
         required: true,
-        enum: ['Vegetariano', 'Vegano', 'Sin Gluten', 'Omnivoro'], // Define las opciones permitidas para la dieta
+        enum: ['Vegetariano', 'Vegano', 'Sin Gluten', 'Omnivoro'],
         message: '{VALUE} no es una dieta válida'
     }
 }, { timestamps: true, versionKey: false });

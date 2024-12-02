@@ -3,7 +3,6 @@ const MateriaPrima = require('../models/materiaPrima');
 const createMateriaPrima = async (req, res) => {
     const { nombre, tipo, cantidad, stock_minimo, unidad, fecha_ingreso, fecha_vencimiento } = req.body;
 
-    // Validaciones manuales usando condicionales if
     if (!nombre || typeof nombre !== 'string' || nombre.trim().length < 3) {
         return res.status(400).send({ error: 'El nombre es obligatorio y debe tener al menos 3 caracteres.' });
     }
@@ -37,7 +36,6 @@ const createMateriaPrima = async (req, res) => {
     }
 
     try {
-        // Crear nueva materia prima con los datos validados
         const materiaPrima = new MateriaPrima({
             nombre,
             tipo,
@@ -48,7 +46,6 @@ const createMateriaPrima = async (req, res) => {
             fecha_vencimiento
         });
 
-        // Guardar la materia prima en la base de datos
         await materiaPrima.save();
         res.status(200).json({ message: 'Materia prima creada exitosamente.', materiaPrima });
     } catch (error) {
@@ -79,17 +76,15 @@ const getMateriaPrimaById = async (req, res) => {
 };
 
 const updateMateriaPrima = async (req, res) => {
-    const { id } = req.params; // ID de la materia prima que se va a actualizar
+    const { id } = req.params;
     const { nombre, tipo, cantidad, stock_minimo, unidad, fecha_ingreso, fecha_vencimiento } = req.body;
 
     try {
-        // Buscar la materia prima por su ID
         const materiaPrima = await MateriaPrima.findById(id);
         if (!materiaPrima) {
             return res.status(404).json({ message: `Materia prima con id ${id} no encontrada` });
         }
 
-        // Actualizar solo los campos proporcionados
         if (nombre) materiaPrima.nombre = nombre;
         if (tipo) materiaPrima.tipo = tipo;
         if (cantidad !== undefined && typeof cantidad === 'number' && cantidad >= 0) materiaPrima.cantidad = cantidad;
@@ -97,14 +92,12 @@ const updateMateriaPrima = async (req, res) => {
         if (unidad) materiaPrima.unidad = unidad;
         if (fecha_ingreso && !isNaN(Date.parse(fecha_ingreso))) materiaPrima.fecha_ingreso = fecha_ingreso;
         if (fecha_vencimiento && !isNaN(Date.parse(fecha_vencimiento))) {
-            // Validar que la fecha de vencimiento sea posterior a la de ingreso
             if (new Date(fecha_vencimiento) <= new Date(materiaPrima.fecha_ingreso)) {
                 return res.status(400).json({ message: 'La fecha de vencimiento debe ser posterior a la fecha de ingreso.' });
             }
             materiaPrima.fecha_vencimiento = fecha_vencimiento;
         }
 
-        // Guardar los cambios
         await materiaPrima.save();
 
         return res.status(200).json({ message: 'Materia prima actualizada exitosamente', materiaPrima });
@@ -121,7 +114,7 @@ const deleteMateriaPrima = async (req, res) => {
         if (!materiaPrima) {
             return res.status(404).send({ error: 'Materia prima no encontrada.' });
         }
-        res.status(200).json({ message: 'Materia prima eliminada exitosamente.'});
+        res.status(200).json({ message: 'Materia prima eliminada exitosamente.' });
     } catch (error) {
         res.status(500).send({ error: 'Error al eliminar la materia prima.' });
     }

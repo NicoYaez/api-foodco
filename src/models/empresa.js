@@ -1,7 +1,6 @@
 const mongoose = require('mongoose');
 const { Schema, model } = mongoose;
 
-// Definir el schema para la Empresa
 const empresaSchema = new Schema({
     rut_empresa: {
         type: String,

@@ -3,7 +3,6 @@ const router = express.Router();
 
 const departamentoController = require('../controllers/departamento.controller');
 const authJwt = require("../middlewares/auth.jwt");
-//[authJwt.verificateToken],
 
 router.post('/new', departamentoController.crearDepartamento);
 

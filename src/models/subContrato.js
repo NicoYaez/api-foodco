@@ -1,30 +1,80 @@
 const mongoose = require('mongoose');
-const { Schema, model } = mongoose;
 
-// Definir el schema para el SubContrato de camiones o despacho
-const subContratoSchema = new Schema({
-    proveedor: {
+const detalleSchema = new mongoose.Schema({
+    descripcion: {
         type: String,
-        required: true, // Nombre del proveedor o empresa de transporte
+        required: true,
+        trim: true,
     },
-    nombreConductor: {
-        type: String,
-        required: true, // Nombre del conductor encargado del despacho
-        trim: true
+    precio: {
+        type: Number,
+        required: true,
+        min: 0,
     },
-    patenteCamion: {
+    estado: {
         type: String,
-        required: true, // Patente o matrícula del camión
-        trim: true
+        required: true,
+        enum: ['Activo', 'Inactivo'],
+        default: 'Activo',
     },
-    tipoCamion: {
-        type: String,
-        required: true, // Tipo de camión (por ejemplo, camión refrigerado, de carga, etc.)
-        trim: true
-    }
 }, {
-    timestamps: true, // Registra las fechas de creación y actualización del subcontrato
-    versionKey: false
+    timestamps: false,
+    versionKey: false,
+    _id: false,
 });
 
-module.exports = model("SubContrato", subContratoSchema);
+const subcontratoSchema = new mongoose.Schema({
+    empresa: {
+        type: String,
+        required: true,
+        trim: true,
+    },
+    contacto: {
+        type: String,
+        required: true,
+        trim: true,
+    },
+    telefono: {
+        type: String,
+        required: true,
+        trim: true,
+    },
+    email: {
+        type: String,
+        required: true,
+        trim: true,
+    },
+    fechaInicio: {
+        type: Date,
+        required: true,
+    },
+    fechaFinalizacion: {
+        type: Date,
+        required: true,
+    },
+    detalles: [detalleSchema],
+    precioTotal: {
+        type: Number,
+        default: 0,
+    },
+    precioTotalConIVA: {
+        type: Number,
+        default: 0,
+    },
+}, {
+    timestamps: true,
+    versionKey: false,
+});
+
+subcontratoSchema.pre('save', function (next) {
+    const subcontrato = this;
+
+    const total = subcontrato.detalles.reduce((sum, detalle) => sum + detalle.precio, 0);
+    subcontrato.precioTotal = total;
+
+    subcontrato.precioTotalConIVA = total * 1.19;
+
+    next();
+});
+
+module.exports = mongoose.model('Subcontrato', subcontratoSchema);

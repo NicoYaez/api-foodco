@@ -2,16 +2,14 @@ const nodemailer = require('nodemailer');
 const dotenv = require('dotenv');
 dotenv.config();
 
-// Configuración del transporte de Nodemailer con Gmail
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
-        user: process.env.EMAIL_FROM, // Tu dirección de correo de Gmail
-        pass: process.env.EMAIL_PASSWORD, // Contraseña o Contraseña de aplicaciones de Gmail
+        user: process.env.EMAIL_FROM,
+        pass: process.env.EMAIL_PASSWORD,
     },
 });
 
-// Función para enviar el correo de restablecimiento de contraseña
 const sendPasswordResetEmail = async (email, resetCode) => {
     const mailOptions = {
         from: process.env.EMAIL_FROM,

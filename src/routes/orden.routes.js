@@ -3,8 +3,6 @@ const router = express.Router();
 const ordenCompraController = require('../controllers/ordenCompra.controller');
 const authJwt = require("../middlewares/auth.jwt");
 
-//router.get('/list', [authJwt.verificateToken], ordenCompraController.verOrdenesCompra);
-
 router.get('/list', ordenCompraController.verOrdenesPorEstado);
 
 router.get('/list/sin-factura', ordenCompraController.verOrdenesCompraSinFactura);
@@ -24,5 +22,11 @@ router.put('/update/:ordenId', [authJwt.verificateToken], ordenCompraController.
 router.get('/list/periodo/:periodo', [authJwt.verificateToken], ordenCompraController.verOrdenesCompraFiltrado);
 
 router.get('/list/despacho', ordenCompraController.verOrdenesListasParaDespacho);
+
+router.put('/:ordenId/cuotas', ordenCompraController.actualizarNumeroDeCuotas);
+
+router.put('/:ordenId/cuotas/:numeroCuota', ordenCompraController.actualizarEstadoCuota);
+
+router.get('/:ordenId/cuotas', ordenCompraController.verOrdenesCompraCuotas);
 
 module.exports = router;

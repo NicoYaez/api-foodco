@@ -10,7 +10,7 @@ const produccionDiariaSchema = new Schema({
     cantidad_producida: {
         type: Number,
         required: true,
-        min: 0  // La cantidad producida no puede ser negativa
+        min: 0
     },
     fecha_produccion: {
         type: Date,
@@ -39,8 +39,8 @@ const produccionDiariaSchema = new Schema({
         }
     ]
 }, {
-    timestamps: true,  // Agrega `createdAt` y `updatedAt`
-    versionKey: false  // Desactiva `__v`
+    timestamps: true,
+    versionKey: false
 });
 
 module.exports = model('ProduccionDiaria', produccionDiariaSchema);

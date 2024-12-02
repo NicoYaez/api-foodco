@@ -9,14 +9,14 @@ const TIPOS_DE_SERVICIO = ['Cafeteria', 'Eventos', 'Snacks'];
 const ingredienteSchema = new Schema({
     ingrediente: {
         type: Schema.Types.ObjectId,
-        ref: 'MateriaPrima',
+        ref: 'Ingrediente',
         required: true
     },
     cantidadRequerida: {
         type: Number,
         required: true
     }
-}, { _id: false });  // Esto desactiva la creación automática del campo _id
+}, { _id: false });
 
 const productoSchema = new Schema({
     nombre: {
@@ -36,7 +36,7 @@ const productoSchema = new Schema({
         type: Number,
         required: true
     },
-    ingredientes: [ingredienteSchema],  // Usamos el subesquema de ingredientes
+    ingredientes: [ingredienteSchema],
     categoria: {
         type: String,
         required: true,

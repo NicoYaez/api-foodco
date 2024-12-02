@@ -7,10 +7,7 @@ const authCliente = require("../controllers/authCliente.controller");
 const authEmpleado = require("../controllers/authEmpleado.controller");
 const authJwt = require("../middlewares/auth.jwt");
 const verifyRegister = require("../middlewares/verifyRegister");
-
-const uploadController = require('../middlewares/upload'); // Importa el middleware de multer
-//authJwt.isAdmin,
-//[verifyRegister.checkRegisterUser]
+const uploadController = require('../middlewares/upload');
 
 router.post('/register/cliente', authCliente.register);
 
