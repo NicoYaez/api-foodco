@@ -1,7 +1,6 @@
 const mongoose = require('mongoose');
 const { Schema, model } = mongoose;
 
-// Definir el schema para el Cliente
 const almacenSchema = new Schema({
     codigoAlmacen: {
         type: String,
@@ -23,7 +22,7 @@ const almacenSchema = new Schema({
     ingredienteAlmacen: [{
         type: Schema.Types.ObjectId,
         ref: 'IngredienteAlmacen',
-        required: false // Cambiar a true
+        required: false
     }]
 },{
     timestamps: false,

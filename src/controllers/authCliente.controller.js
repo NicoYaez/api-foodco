@@ -1,4 +1,3 @@
-// controllers/registerController.js
 const Cliente = require('../models/cliente');
 const Empresa = require('../models/empresa');
 const Contacto = require('../models/contacto');
@@ -20,40 +19,33 @@ const register = async (req, res) => {
     const email = req.body.email ? req.body.email.toLowerCase() : '';
 
     try {
-        // Validaciones de campos
         if (!username || !password || !email) {
             return res.status(400).json({ message: "Todos los campos obligatorios deben ser completados" });
         }
 
-        // Verificar formato de correo válido
         if (!validator.isEmail(email)) {
             return res.status(400).json({ message: "El correo no es válido" });
         }
 
-        // Verificar si ya existe un cliente con el mismo correo
         const existingUser = await Cliente.findOne({ email });
         if (existingUser) {
             return res.status(400).json({ message: "El correo ya está en uso" });
         }
 
-        // Validar la longitud de la contraseña
         if (!validator.isLength(password, { min: 6 })) {
             return res.status(400).json({ message: "La contraseña debe tener al menos 6 caracteres" });
         }
 
-        // Validar otros campos, como el formato del nombre de usuario
         if (!validator.isAlphanumeric(username)) {
             return res.status(400).json({ message: "El nombre de usuario debe contener solo letras y números" });
         }
 
-        // Validar los datos de la empresa si se proporcionan
         let savedEmpresa;
         if (empresa) {
             if (!empresa.rut_empresa || !empresa.nombre_empresa) {
                 return res.status(400).json({ message: "Los campos de RUT y nombre de la empresa son obligatorios" });
             }
 
-            // Validar el formato del correo de contacto de la empresa
             if (empresa.correo_contacto && !validator.isEmail(empresa.correo_contacto)) {
                 return res.status(400).json({ message: "El correo de contacto de la empresa no es válido" });
             }
@@ -72,19 +64,16 @@ const register = async (req, res) => {
             savedEmpresa = await newEmpresa.save();
         }
 
-        // Crear nuevo cliente
         let newClient = new Cliente({
             username: username,
             email: email,
             password: password,
-            empresa: savedEmpresa ? savedEmpresa._id : null,  // Asigna el ID de la empresa guardada
+            empresa: savedEmpresa ? savedEmpresa._id : null,
             sucursal: sucursal
         });
 
-        // Encriptar la contraseña
         newClient.password = await newClient.encryptPassword(password);
 
-        // Guardar contacto si se proporciona
         if (contacto) {
             if (!validator.isEmail(contacto.email)) {
                 return res.status(400).json({ message: "El correo del contacto no es válido" });
@@ -100,20 +89,17 @@ const register = async (req, res) => {
             newClient.contacto = savedContact._id;
         }
 
-        // Guardar cliente
         const userSave = await newClient.save();
-        await sendRegister(username, email, password); // Enviar correo electrónico
+        await sendRegister(username, email, password);
 
-        // Generar token
         const { token, expiresIn } = generateToken({ id: userSave._id, type: 'Cliente', role: 'Cliente' }, res);
 
-        // Responder con los datos del cliente
         return res.status(200).json({
             token,
             expiresIn,
             username: userSave.username,
             email: userSave.email,
-            password: userSave.password,  // Devuelve la contraseña en respuesta solo en registro
+            password: userSave.password,
             empresa: savedEmpresa ? savedEmpresa : null
         });
     } catch (error) {
@@ -127,30 +113,25 @@ const login = async (req, res) => {
         const { password } = req.body;
         const email = req.body.email ? req.body.email.toLowerCase() : '';
 
-        // Validar que el correo y la contraseña estén presentes
         if (!email || !password) {
             return res.status(400).json({ message: "Correo y contraseña son obligatorios" });
         }
 
-        // Verificar si el correo tiene un formato válido
         if (!validator.isEmail(email)) {
             return res.status(400).json({ message: "El correo no es válido" });
         }
 
-        // Buscar al cliente por su correo
         const clienteFound = await Cliente.findOne({ email });
         if (!clienteFound) {
             return res.status(404).json({ message: "Cliente no encontrado" });
         }
 
-        // Verificar la contraseña
         const matchPassword = await clienteFound.validatePassword(password, clienteFound.password);
         if (!matchPassword) {
             return res.status(401).json({ message: "Contraseña incorrecta" });
         }
 
-        // Generar el token de acceso
-        const expiresIn = 60 * 60 * 24; // 1 día de validez
+        const expiresIn = 60 * 60 * 24;
         const tokenPayload = { id: clienteFound._id, type: 'Cliente', role: 'Cliente' };
         const token = jwt.sign(tokenPayload, process.env.SECRET_API, { expiresIn });
 
@@ -163,15 +144,15 @@ const login = async (req, res) => {
 
 const verClientes = async (req, res) => {
     try {
-        // Obtener todos los clientes de la base de datos
-        const clientes = await Cliente.find().populate('contacto').populate('empresa').populate('sucursal');
+        const clientes = await Cliente.find()
+            .populate('contacto')
+            .populate('empresa')
+            .populate('sucursal');
 
-        // Si no hay clientes registrados
         if (clientes.length === 0) {
             return res.status(404).json({ message: "No hay clientes registrados" });
         }
 
-        // Retornar la lista de clientes
         return res.status(200).json(clientes);
     } catch (error) {
         console.error('Error al obtener los clientes:', error);
@@ -181,10 +162,8 @@ const verClientes = async (req, res) => {
 
 const verClientePorId = async (req, res) => {
     try {
-        // Obtener el id del cliente desde los parámetros de la URL
         const clienteId = req.params.id;
 
-        // Buscar el cliente en la base de datos por su id y realizar los populates necesarios
         const cliente = await Cliente.findById(clienteId)
             .populate('contacto')
             .populate({
@@ -196,12 +175,10 @@ const verClientePorId = async (req, res) => {
             })
             .populate('sucursal');
 
-        // Si el cliente no existe
         if (!cliente) {
             return res.status(404).json({ message: "Cliente no encontrado" });
         }
 
-        // Retornar el cliente encontrado
         return res.status(200).json(cliente);
     } catch (error) {
         console.error('Error al obtener el cliente por ID:', error);
@@ -210,17 +187,15 @@ const verClientePorId = async (req, res) => {
 };
 
 const actualizarCliente = async (req, res) => {
-    const { id } = req.params;  // ID del cliente a actualizar
+    const { id } = req.params;
     const { username, password, empresa, contacto, sucursal, email } = req.body;
 
     try {
-        // Verificar si el cliente existe
         const cliente = await Cliente.findById(id);
         if (!cliente) {
             return res.status(404).json({ message: `Cliente con id ${id} no encontrado` });
         }
 
-        // Actualizar el correo solo si es diferente
         if (email && email.toLowerCase() !== cliente.email) {
             const existingUser = await Cliente.findOne({ email: email.toLowerCase() });
             if (existingUser) {
@@ -229,12 +204,9 @@ const actualizarCliente = async (req, res) => {
             cliente.email = email.toLowerCase();
         }
 
-        // Actualizar los campos proporcionados
         if (username) cliente.username = username;
-        if (password) cliente.password = await cliente.encryptPassword(password);  // Encriptar la nueva contraseña si se proporciona
+        if (password) cliente.password = await cliente.encryptPassword(password);
         if (sucursal) cliente.sucursal = sucursal;
-
-        // Actualizar la empresa si se proporciona
         if (empresa) {
             const empresaExistente = await Empresa.findById(cliente.empresa);
             if (empresaExistente) {
@@ -265,7 +237,6 @@ const actualizarCliente = async (req, res) => {
             }
         }
 
-        // Actualizar el contacto si se proporciona
         if (contacto) {
             const contactoExistente = await Contacto.findById(cliente.contacto);
             if (contactoExistente) {
@@ -286,7 +257,6 @@ const actualizarCliente = async (req, res) => {
             }
         }
 
-        // Guardar los cambios del cliente
         await cliente.save();
 
         return res.status(200).json({
@@ -303,27 +273,22 @@ const deleteCliente = async (req, res) => {
     try {
         const { id } = req.params;
 
-        // Buscar el cliente por su ID
         const cliente = await Cliente.findById(id);
 
         if (!cliente) {
             return res.status(404).json({ message: 'Cliente no encontrado' });
         }
 
-        // Eliminar contacto si existe
         if (cliente.contacto) {
             await Contacto.findByIdAndDelete(cliente.contacto);
         }
 
-        // Eliminar empresa si existe
         if (cliente.empresa) {
             await Empresa.findByIdAndDelete(cliente.empresa);
         }
 
-        // Eliminar el cliente
         await Cliente.findByIdAndDelete(id);
 
-        // Responder con éxito
         res.status(200).json({ message: 'Cliente, empresa y contacto eliminados exitosamente' });
     } catch (error) {
         console.error('Error al eliminar el cliente:', error);
@@ -354,16 +319,14 @@ const requestPasswordReset = async (req, res) => {
         return res.status(404).json({ message: 'No se ha encontrado ningún usuario con este correo electrónico.' });
     }
 
-    // Generate 6-character alphanumeric reset code and set expiration
     const resetCode = generateResetCode();
-    const resetExpires = Date.now() + 3600000; // Code valid for 1 hour
+    const resetExpires = Date.now() + 3600000;
 
     clienteFound.passwordResetCode = resetCode;
     clienteFound.passwordResetExpires = resetExpires;
 
     await clienteFound.save();
 
-    // Send email to user with the reset code
     await sendPasswordResetEmail(clienteFound.email, resetCode);
 
     res.status(200).json({ message: 'Código de restablecimiento de contraseña enviado.' });
@@ -389,30 +352,25 @@ const resetPassword = async (req, res) => {
         return res.status(404).json({ message: 'No se ha encontrado ningún usuario con este correo electrónico.' });
     }
 
-    // Verificar que el código de restablecimiento coincide y no ha expirado
     if (clienteFound.passwordResetCode !== resetCode || clienteFound.passwordResetExpires < Date.now()) {
         return res.status(400).json({ message: 'Código de restablecimiento inválido o expirado.' });
     }
 
-    // Verificar que la nueva contraseña tenga al menos 6 caracteres
     if (newPassword.length < 6) {
         return res.status(400).json({ message: 'La nueva contraseña debe tener al menos 6 caracteres.' });
     }
 
-    // Verificar que la nueva contraseña no sea igual a la actual
     const isSamePassword = await bcrypt.compare(newPassword, clienteFound.password);
     if (isSamePassword) {
         return res.status(400).json({ message: 'La nueva contraseña no puede ser igual a la contraseña actual.' });
     }
 
-    // Actualizar la contraseña con la nueva
     clienteFound.password = await bcrypt.hash(newPassword, 10);
     clienteFound.passwordResetCode = undefined;
     clienteFound.passwordResetExpires = undefined;
 
     await clienteFound.save();
 
-    // Enviar correo de confirmación de cambio de contraseña
     await sendPasswordChangeConfirmationEmail(clienteFound.email);
 
     res.status(200).json({ message: 'Contraseña restablecida con éxito.' });

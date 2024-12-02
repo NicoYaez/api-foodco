@@ -2,7 +2,6 @@ const mongoose = require('mongoose');
 const { Schema, model } = mongoose;
 const bcrypt = require('bcryptjs');
 
-// Definir el schema para el Cliente
 const clienteSchema = new Schema({
     username: {
         type: String,
@@ -34,7 +33,7 @@ const clienteSchema = new Schema({
     },
     passwordResetCode: String,
     passwordResetExpires: Date
-},{
+}, {
     timestamps: true,
     versionKey: false,
 });

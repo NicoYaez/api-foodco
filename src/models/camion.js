@@ -1,7 +1,6 @@
 const mongoose = require('mongoose');
 const { Schema, model } = mongoose;
 
-// Definir el schema para el Cliente
 const camionSchema = new Schema({
     placa: {
         type: String,

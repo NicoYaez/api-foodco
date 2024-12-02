@@ -3,7 +3,6 @@ const Cliente = require('./cliente');
 
 const { Schema, model } = mongoose;
 
-// Definir el schema para el Ejecutivo
 const contactoSchema = new Schema({
     nombre: {
         type: String,

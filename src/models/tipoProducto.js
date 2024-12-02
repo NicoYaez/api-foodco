@@ -7,8 +7,8 @@ const tipoProductoSchema = new Schema({
         required: true,
     }
 }, {
-    timestamps: true,  // Agrega `createdAt` y `updatedAt`
-    versionKey: false  // Desactiva `__v`
+    timestamps: true,
+    versionKey: false
 });
 
 module.exports = model('TipoProducto', tipoProductoSchema);

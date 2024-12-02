@@ -10,13 +10,11 @@ async function crearSeleccionProductos(req, res) {
             return res.status(400).json({ message: 'Faltan campos obligatorios' });
         }
 
-        // Verificar si el cliente existe
         const cliente = await Cliente.findById(clienteId);
         if (!cliente) {
             return res.status(404).json({ message: `Cliente con id ${clienteId} no encontrado` });
         }
 
-        // Validar la fecha requerida
         const fechaActual = new Date();
         const diasAntelacion = 15;
         const fechaMinima = new Date(fechaActual.setDate(fechaActual.getDate() + diasAntelacion));
@@ -25,7 +23,6 @@ async function crearSeleccionProductos(req, res) {
             return res.status(400).json({ message: 'La fecha de entrega debe ser al menos 15 días de antelación.' });
         }
 
-        // Validar que los productos existan y calcular el precio total
         let precioTotal = 0;
         const productosValidos = [];
 
@@ -35,33 +32,28 @@ async function crearSeleccionProductos(req, res) {
                 return res.status(404).json({ message: `Producto con id ${item.producto} no encontrado` });
             }
 
-            // Obtener el precio unitario del producto desde la base de datos
             const precioUnitario = producto.precio;
 
-            // Calcular el precio total de este producto considerando la cantidad
             const subtotal = precioUnitario * item.cantidad;
             precioTotal += subtotal;
 
-            // Agregar el producto con su precio unitario a la selección
             productosValidos.push({
                 producto: item.producto,
                 cantidad: item.cantidad,
-                precioUnitario: precioUnitario // Agregamos el precio unitario al objeto
+                precioUnitario: precioUnitario
             });
         }
 
-        // Crear la selección de productos con los nuevos campos
         const nuevaSeleccion = new SeleccionProductos({
             productos: productosValidos,
             cliente: clienteId,
-            precio: precioTotal,  // Precio total de la selección de productos
+            precio: precioTotal,
             direccion,
             ciudad,
             pais,
             fechaRequerida
         });
 
-        // Guardar en la base de datos
         await nuevaSeleccion.save();
 
         return res.status(200).json(nuevaSeleccion);

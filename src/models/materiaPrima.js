@@ -13,12 +13,12 @@ const materiaPrimaSchema = new Schema({
     cantidad: {
         type: Number,
         required: true,
-        min: 0  // No puede ser negativo
+        min: 0
     },
     stock_minimo: {
         type: Number,
         required: true,
-        min: 0  // No puede ser negativo
+        min: 0
     },
     unidad: {
         type: String,
@@ -27,22 +27,21 @@ const materiaPrimaSchema = new Schema({
     fecha_ingreso: {
         type: Date,
         required: true,
-        default: Date.now  // Asigna la fecha actual por defecto
+        default: Date.now
     },
     fecha_vencimiento: {
         type: Date,
         required: true,
         validate: {
             validator: function (value) {
-                // Validar que la fecha de vencimiento sea posterior a la de ingreso
                 return value > this.fecha_ingreso;
             },
             message: 'La fecha de vencimiento debe ser posterior a la fecha de ingreso.'
         }
     }
 }, {
-    timestamps: true,  // Agrega `createdAt` y `updatedAt`
-    versionKey: false  // Desactiva `__v`
+    timestamps: true,
+    versionKey: false
 });
 
 module.exports = model('MateriaPrima', materiaPrimaSchema);

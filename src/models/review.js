@@ -7,70 +7,70 @@ const reviewSchema = new Schema({
         required: true,
         min: 0,
         max: 5
-    }, // Calidad de la comida
+    },
     menuVariety: {
         type: Number,
         required: true,
         min: 0,
         max: 5
-    }, // Variedad del menú
+    },
     deliveryTime: {
         type: Number,
         required: true,
         min: 0,
         max: 5
-    }, // Tiempo de entrega
+    },
     staffFriendliness: {
         type: Number,
         required: true,
         min: 0,
         max: 5
-    }, // Amabilidad del personal
+    },
     cleanliness: {
         type: Number,
         required: true,
         min: 0,
         max: 5
-    }, // Limpieza y presentación
+    },
     specialRequests: {
         type: Number,
         required: true,
         min: 0,
         max: 5
-    }, // Cumplimiento de solicitudes especiales
+    },
     valueForMoney: {
         type: Number,
         required: true,
         min: 0,
         max: 5
-    }, // Relación calidad-precio
+    },
     easeOfContact: {
         type: Number,
         required: true,
         min: 0,
         max: 5
-    }, // Facilidad de contacto
+    },
     creativity: {
         type: Number,
         required: true,
         min: 0,
         max: 5
-    }, // Innovación y creatividad
+    },
     overallSatisfaction: {
         type: Number,
         required: true,
         min: 0,
         max: 5
-    }, // Satisfacción general
+    },
     totalScore: {
         type: Number
-    }, // Puntuación calculada
+    },
     ordenCompra: {
         type: Schema.Types.ObjectId,
         ref: 'OrdenCompra',
         required: true
     },
-    comentario: { type: String }, // Comentario
+    comentario: { type: String },
 }, {
     timestamps: true,
     versionKey: false

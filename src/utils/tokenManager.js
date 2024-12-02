@@ -1,14 +1,14 @@
 const jwt = require('jsonwebtoken');
 
 const generateToken = (uid) => {
-    const expiresIn = 60 * 60 * 24; // 24 hours
+    const expiresIn = 60 * 60 * 24;
 
     try {
       const token = jwt.sign({ uid }, process.env.SECRET_API, {
         expiresIn,
       });
 
-      return { token, expiresIn }; // Returns the token and expiration time
+      return { token, expiresIn };
     } catch (error) {
       console.error(error);
       throw new Error('Error generating the token');

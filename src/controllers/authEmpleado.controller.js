@@ -16,30 +16,25 @@ const login = async (req, res) => {
     const { password } = req.body;
     const email = req.body.email ? req.body.email.toLowerCase() : '';
 
-    // Validar que el correo y la contraseña estén presentes
     if (!email || !password) {
       return res.status(400).json({ message: "Correo y contraseña son obligatorios" });
     }
 
-    // Verificar si el correo tiene un formato válido
     if (!validator.isEmail(email)) {
       return res.status(400).json({ message: "El correo no es válido" });
     }
 
-    // Buscar al empleado por su correo
     const empleadoFound = await Empleado.findOne({ email }).populate('role', 'nombre');
     if (!empleadoFound) {
       return res.status(404).json({ message: "Empleado no encontrado" });
     }
 
-    // Verificar la contraseña
     const matchPassword = await empleadoFound.validatePassword(password, empleadoFound.password);
     if (!matchPassword) {
       return res.status(401).json({ token: null, message: "Contraseña incorrecta" });
     }
 
-    // Generar el token de acceso
-    const expiresIn = 60 * 60 * 24; // 1 día de validez
+    const expiresIn = 60 * 60 * 24;
     const tokenPayload = { id: empleadoFound._id, type: 'Empleado', role: empleadoFound.role.nombre };
     const token = jwt.sign(tokenPayload, process.env.SECRET_API, { expiresIn });
 
@@ -57,27 +52,22 @@ const register = async (req, res) => {
 
     console.log('Datos recibidos:', req.body);
 
-    // Validar que todos los campos obligatorios estén presentes
     if (!username || !password || !email || !rut || !nombre || !departamento || !role) {
       return res.status(400).json({ message: "Todos los campos obligatorios deben ser completados" });
     }
 
-    // Verificar si el correo tiene un formato válido
     if (!validator.isEmail(email)) {
       return res.status(400).json({ message: "El correo no es válido" });
     }
 
-    // Verificar la longitud de la contraseña
     if (!validator.isLength(password, { min: 6 })) {
       return res.status(400).json({ message: "La contraseña debe tener al menos 6 caracteres" });
     }
 
-    // Verificar si el nombre de usuario contiene solo caracteres alfanuméricos
     if (!validator.isAlphanumeric(username)) {
       return res.status(400).json({ message: "El nombre de usuario debe contener solo letras y números" });
     }
 
-    // Verificar si ya existe un empleado con el mismo email o username
     const empleadoExistente = await Empleado.findOne({
       $or: [{ email }, { username }]
     });
@@ -86,7 +76,6 @@ const register = async (req, res) => {
       return res.status(400).json({ message: 'El nombre de usuario o el email ya están en uso' });
     }
 
-    // Crear una nueva instancia de empleado
     const nuevoEmpleado = new Empleado({
       username,
       email,
@@ -98,23 +87,18 @@ const register = async (req, res) => {
       sucursal
     });
 
-    // Encriptar la contraseña antes de guardar
     nuevoEmpleado.password = await nuevoEmpleado.encryptPassword(password);
 
     if (req.file) {
       nuevoEmpleado.setImagenPerfil(req.file.filename);
     };
 
-    // Guardar el empleado en la base de datos
     let empleadoSave = await nuevoEmpleado.save();
 
-    // Popular el campo role para obtener el nombre del role
     empleadoSave = await empleadoSave.populate('role', 'nombre');
 
-    // Generar token
     const { token, expiresIn } = generateToken({ id: empleadoSave._id, type: 'Empleado', role: empleadoSave.role.nombre }, res);
 
-    // Responder con éxito
     res.status(200).json({
       message: 'Empleado registrado exitosamente',
       token,
@@ -146,16 +130,14 @@ const requestPasswordReset = async (req, res) => {
     return res.status(404).json({ message: 'No se ha encontrado ningún usuario con este correo electrónico.' });
   }
 
-  // Generate 6-character alphanumeric reset code and set expiration
   const resetCode = generateResetCode();
-  const resetExpires = Date.now() + 3600000; // Code valid for 1 hour
+  const resetExpires = Date.now() + 3600000;
 
   empleadoFound.passwordResetCode = resetCode;
   empleadoFound.passwordResetExpires = resetExpires;
 
   await empleadoFound.save();
 
-  // Send email to user with the reset code
   await sendPasswordResetEmail(empleadoFound.email, resetCode);
 
   res.status(200).json({ message: 'Código de restablecimiento de contraseña enviado.' });
@@ -181,30 +163,25 @@ const resetPassword = async (req, res) => {
     return res.status(404).json({ message: 'No se ha encontrado ningún usuario con este correo electrónico.' });
   }
 
-  // Verificar que el código de restablecimiento coincide y no ha expirado
   if (empleadoFound.passwordResetCode !== resetCode || empleadoFound.passwordResetExpires < Date.now()) {
     return res.status(400).json({ message: 'Código de restablecimiento inválido o expirado.' });
   }
 
-  // Verificar que la nueva contraseña tenga al menos 6 caracteres
   if (newPassword.length < 6) {
     return res.status(400).json({ message: 'La nueva contraseña debe tener al menos 6 caracteres.' });
   }
 
-  // Verificar que la nueva contraseña no sea igual a la actual
   const isSamePassword = await bcrypt.compare(newPassword, empleadoFound.password);
   if (isSamePassword) {
     return res.status(400).json({ message: 'La nueva contraseña no puede ser igual a la contraseña actual.' });
   }
 
-  // Actualizar la contraseña con la nueva
   empleadoFound.password = await bcrypt.hash(newPassword, 10);
   empleadoFound.passwordResetCode = undefined;
   empleadoFound.passwordResetExpires = undefined;
 
   await empleadoFound.save();
 
-  // Enviar correo de confirmación de cambio de contraseña
   await sendPasswordChangeConfirmationEmail(empleadoFound.email);
 
   res.status(200).json({ message: 'Contraseña restablecida con éxito.' });
@@ -212,18 +189,15 @@ const resetPassword = async (req, res) => {
 
 const verEmpleados = async (req, res) => {
   try {
-    // Obtener todos los empleados con populate para los campos relacionados
     const empleados = await Empleado.find()
-      .populate('role', 'nombre') // Popular el campo 'role' y solo traer el 'nombre'
-      .populate('departamento', 'nombre') // Popular el campo 'departamento' y solo traer el 'nombre'
-      .populate('sucursal', 'nombre'); // Popular el campo 'sucursal' y solo traer el 'nombre'
+      .populate('role', 'nombre')
+      .populate('departamento', 'nombre')
+      .populate('sucursal', 'nombre');
 
-    // Verificar si hay empleados
     if (!empleados || empleados.length === 0) {
       return res.status(404).json({ message: 'No se encontraron empleados' });
     }
 
-    // Responder con la lista de empleados y sus campos populados
     res.status(200).json({ empleados });
   } catch (error) {
     console.error('Error al obtener empleados:', error);
@@ -235,10 +209,8 @@ const verEmpleadosFiltrados = async (req, res) => {
   try {
     const { role, departamento, sucursal } = req.query;
 
-    // Crear un objeto de búsqueda dinámico
     let filtro = {};
 
-    // Realizar consultas de búsqueda para obtener los ObjectId de los nombres
     if (role) {
       const roleDoc = await Role.findOne({ nombre: role });
       if (!roleDoc) {
@@ -263,11 +235,10 @@ const verEmpleadosFiltrados = async (req, res) => {
       filtro.sucursal = sucursalDoc._id;
     }
 
-    // Buscar empleados con los filtros proporcionados
     const empleados = await Empleado.find(filtro)
-      .populate('role', 'nombre') // Popular el campo 'role' y solo traer el 'nombre'
-      .populate('departamento', 'nombre') // Popular el campo 'departamento' y solo traer el 'nombre'
-      .populate('sucursal', 'nombre'); // Popular el campo 'sucursal' y solo traer el 'nombre'
+      .populate('role', 'nombre')
+      .populate('departamento', 'nombre')
+      .populate('sucursal', 'nombre');
 
     if (!empleados || empleados.length === 0) {
       return res.status(404).json({ message: 'No se encontraron empleados con los filtros proporcionados' });
@@ -321,18 +292,15 @@ const getEmpleadoById = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Buscar el empleado por ID y hacer populate en los campos relacionados
     const empleado = await Empleado.findById(id)
-      .populate('departamento', 'nombre') // Populate en el departamento, solo traer el nombre
-      .populate('role', 'nombre') // Populate en el rol, solo traer el nombre
-      .populate('sucursal', 'nombre'); // Populate en la sucursal, solo traer el nombre
+      .populate('departamento', 'nombre')
+      .populate('role', 'nombre')
+      .populate('sucursal', 'nombre');
 
-    // Verificar si el empleado existe
     if (!empleado) {
       return res.status(404).json({ message: 'Empleado no encontrado' });
     }
 
-    // Responder con el empleado encontrado
     res.json(empleado);
   } catch (error) {
     console.error('Error al obtener el empleado:', error);

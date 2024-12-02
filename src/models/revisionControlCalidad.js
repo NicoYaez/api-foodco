@@ -4,7 +4,7 @@ const { Schema, model } = mongoose;
 const revisionControlCalidadSchema = new Schema({
     produccion_id: {
         type: Schema.Types.ObjectId,
-        ref: 'ProduccionDiaria',  // Relación con el modelo de producción
+        ref: 'ProduccionDiaria',
         required: true
     },
     estado: {
@@ -21,7 +21,7 @@ const revisionControlCalidadSchema = new Schema({
         default: Date.now
     },
     inspector: {
-        type: String,  // Nombre del inspector que realizó la revisión
+        type: String,
         required: true
     }
 }, {

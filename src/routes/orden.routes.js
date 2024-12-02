@@ -3,8 +3,6 @@ const router = express.Router();
 const ordenCompraController = require('../controllers/ordenCompra.controller');
 const authJwt = require("../middlewares/auth.jwt");
 
-//router.get('/list', [authJwt.verificateToken], ordenCompraController.verOrdenesCompra);
-
 router.get('/list', ordenCompraController.verOrdenesPorEstado);
 
 router.get('/list/sin-factura', ordenCompraController.verOrdenesCompraSinFactura);

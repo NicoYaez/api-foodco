@@ -18,7 +18,7 @@ const produccionSchema = new Schema({
     },
     fecha: {
         type: Date,
-        default: Date.now, // Asigna la fecha y hora actuales por defecto
+        default: Date.now,
         required: true
     },
     estado: {

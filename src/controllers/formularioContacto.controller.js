@@ -1,6 +1,5 @@
 const FormularioContacto = require('../models/formularioContacto');
 
-// Controlador para crear un nuevo mensaje
 const crearMensaje = async (req, res) => {
     try {
         const { nombre, apellido, email, telefono, asunto, mensaje } = req.body;
@@ -30,7 +29,6 @@ const crearMensaje = async (req, res) => {
     }
 };
 
-// Controlador para obtener todos los mensajes
 const obtenerMensajes = async (req, res) => {
     try {
         const mensajes = await FormularioContacto.find();
@@ -40,7 +38,6 @@ const obtenerMensajes = async (req, res) => {
     }
 };
 
-// Controlador para obtener un mensaje por ID
 const obtenerMensajePorId = async (req, res) => {
     try {
         const { id } = req.params;
@@ -56,7 +53,6 @@ const obtenerMensajePorId = async (req, res) => {
     }
 };
 
-// Controlador para actualizar un mensaje por ID
 const actualizarMensaje = async (req, res) => {
     try {
         const { id } = req.params;
@@ -78,7 +74,6 @@ const actualizarMensaje = async (req, res) => {
     }
 };
 
-// Controlador para eliminar un mensaje por ID
 const eliminarMensaje = async (req, res) => {
     try {
         const { id } = req.params;
@@ -94,7 +89,6 @@ const eliminarMensaje = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
-
 
 module.exports = {
     crearMensaje,

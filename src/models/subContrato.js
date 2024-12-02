@@ -1,6 +1,5 @@
 const mongoose = require('mongoose');
 
-// Esquema para los detalles de los subcontratos
 const detalleSchema = new mongoose.Schema({
     descripcion: {
         type: String,
@@ -10,12 +9,12 @@ const detalleSchema = new mongoose.Schema({
     precio: {
         type: Number,
         required: true,
-        min: 0, // Asegura que el precio no sea negativo
+        min: 0,
     },
     estado: {
         type: String,
         required: true,
-        enum: ['Activo', 'Inactivo'], // Solo permite estos valores
+        enum: ['Activo', 'Inactivo'],
         default: 'Activo',
     },
 }, {
@@ -24,7 +23,6 @@ const detalleSchema = new mongoose.Schema({
     _id: false,
 });
 
-// Esquema principal para Subcontrato
 const subcontratoSchema = new mongoose.Schema({
     empresa: {
         type: String,
@@ -54,29 +52,26 @@ const subcontratoSchema = new mongoose.Schema({
         type: Date,
         required: true,
     },
-    detalles: [detalleSchema], // Relación con los detalles
+    detalles: [detalleSchema],
     precioTotal: {
         type: Number,
-        default: 0, // Calculado automáticamente
+        default: 0,
     },
     precioTotalConIVA: {
         type: Number,
-        default: 0, // Calculado automáticamente
+        default: 0,
     },
 }, {
     timestamps: true,
     versionKey: false,
 });
 
-// Middleware para calcular precios antes de guardar
 subcontratoSchema.pre('save', function (next) {
     const subcontrato = this;
 
-    // Calcula el precio total
     const total = subcontrato.detalles.reduce((sum, detalle) => sum + detalle.precio, 0);
     subcontrato.precioTotal = total;
 
-    // Calcula el precio total con IVA (19%)
     subcontrato.precioTotalConIVA = total * 1.19;
 
     next();

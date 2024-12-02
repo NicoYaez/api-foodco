@@ -1,6 +1,5 @@
-const Menu = require('../models/menu'); // Importa tu modelo Menu
+const Menu = require('../models/menu')
 
-// Controlador para crear un menú semanal con imagen
 const crearMenu = async (req, res) => {
     const { nombre, productos, dieta } = req.body;
 
@@ -11,18 +10,15 @@ const crearMenu = async (req, res) => {
             });
         }
 
-        // Crea el menú con los datos proporcionados
         const nuevoMenu = new Menu({
             nombre,
             productos,
-            disponible: false, // Por defecto, el menú no estará disponible
+            disponible: false,
             dieta
         });
 
-        // Guarda el menú en la base de datos
         await nuevoMenu.save();
 
-        // Devuelve la respuesta al cliente
         return res.status(200).json({
             message: 'Menú creado exitosamente',
             menu: nuevoMenu
@@ -38,10 +34,8 @@ const crearMenu = async (req, res) => {
 
 const verMenus = async (req, res) => {
     try {
-        // Buscar todos los menús en la base de datos
         const menus = await Menu.find().populate('productos');
 
-        // Devolver la lista de menús encontrados
         return res.status(200).json({
             menus
         });
@@ -66,14 +60,12 @@ const verMenusStatus = async (req, res) => {
 
         let query = {};
 
-        // Determinar la consulta basada en el valor del status
         if (status === 'true') {
             query.disponible = true;
         } else if (status === 'false') {
             query.disponible = false;
         }
 
-        // Buscar menús en la base de datos según la consulta generada
         const menus = await Menu.find(query).populate('productos').populate({
             path: 'productos',
             populate: {
@@ -81,7 +73,6 @@ const verMenusStatus = async (req, res) => {
             }
         });
 
-        // Devolver la lista de menús encontrados
         return res.status(200).json({
             menus
         });
@@ -96,10 +87,8 @@ const verMenusStatus = async (req, res) => {
 
 const verMenusFilter = async (req, res) => {
     try {
-        // Extraer los filtros de los parámetros de consulta
         const { categoria, dieta, tipoDeServicio } = req.query;
 
-        // Construir un objeto de filtros dinámicamente
         let filtros = { disponible: true };
 
         if (dieta) {
@@ -109,15 +98,12 @@ const verMenusFilter = async (req, res) => {
             filtros.tipoDeServicio = tipoDeServicio;
         }
 
-        // Si la categoría está definida, usar $elemMatch para buscar dentro de productos
         if (categoria) {
             filtros.productos = { $elemMatch: { categoria: categoria } };
         }
 
-        // Buscar los menús en la base de datos con los filtros aplicados
         const menus = await Menu.find(filtros).populate('productos');
 
-        // Devolver la lista de menús encontrados
         return res.status(200).json({
             menus
         });
@@ -132,19 +118,17 @@ const verMenusFilter = async (req, res) => {
 
 const cambiarDisponibilidad = async (req, res) => {
     try {
-        const { id } = req.params; // Se asume que pasas el ID del menú en los parámetros de la URL
-        const { disponible } = req.body; // Se asume que pasas el nuevo estado de disponibilidad en el cuerpo de la solicitud
+        const { id } = req.params;
+        const { disponible } = req.body;
 
-        // Verificamos que el campo "disponible" exista en el cuerpo de la solicitud
         if (typeof disponible !== 'boolean') {
             return res.status(400).json({ message: 'El campo "disponible" debe ser un booleano' });
         }
 
-        // Actualizamos el estado de disponibilidad del menú
         const menuActualizado = await Menu.findByIdAndUpdate(
             id,
             { disponible: disponible },
-            { new: true } // Retorna el menú actualizado
+            { new: true }
         );
 
         if (!menuActualizado) {
@@ -162,23 +146,20 @@ const cambiarDisponibilidad = async (req, res) => {
 };
 
 const actualizarMenu = async (req, res) => {
-    const { id } = req.params;  // ID del menú a actualizar
+    const { id } = req.params;
     const { nombre, productos, dieta, disponible } = req.body;
 
     try {
-        // Verificar si el menú existe
         const menu = await Menu.findById(id);
         if (!menu) {
             return res.status(404).json({ message: `Menú con id ${id} no encontrado` });
         }
 
-        // Actualizar solo los campos proporcionados
         if (nombre) menu.nombre = nombre;
         if (productos) menu.productos = productos;
         if (dieta) menu.dieta = dieta;
-        if (typeof disponible !== 'undefined') menu.disponible = disponible;  // Se verifica el tipo para manejar valores booleanos
+        if (typeof disponible !== 'undefined') menu.disponible = disponible;
 
-        // Guardar los cambios en la base de datos
         await menu.save();
 
         return res.status(200).json({
@@ -195,16 +176,14 @@ const actualizarMenu = async (req, res) => {
 };
 
 const eliminarMenu = async (req, res) => {
-    const { id } = req.params;  // ID del menú a eliminar
+    const { id } = req.params;
 
     try {
-        // Verificar si el menú existe
         const menu = await Menu.findById(id);
         if (!menu) {
             return res.status(404).json({ message: `Menú con id ${id} no encontrado` });
         }
 
-        // Eliminar el menú
         await menu.remove();
 
         return res.status(200).json({

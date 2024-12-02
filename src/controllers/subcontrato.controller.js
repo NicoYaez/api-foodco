@@ -29,7 +29,6 @@ const crearSubcontrato = async (req, res) => {
     }
 };
 
-// Obtener todos los subcontratos
 const obtenerSubcontratos = async (req, res) => {
     try {
         const subcontratos = await Subcontrato.find();
@@ -60,35 +59,29 @@ const obtenerSubcontratoPorId = async (req, res) => {
 };
 
 const actualizarSubcontrato = async (req, res) => {
-    const { id } = req.params; // ID del subcontrato a actualizar
+    const { id } = req.params;
     const { empresa, contacto, telefono, email, fechaInicio, fechaFinalizacion, detalles } = req.body;
 
     try {
-        // Verificar si el subcontrato existe
         const subcontrato = await Subcontrato.findById(id);
         if (!subcontrato) {
             return res.status(404).json({ message: `Subcontrato con id ${id} no encontrado` });
         }
 
-        // Actualizar solo los campos proporcionados
         if (empresa) subcontrato.empresa = empresa;
         if (contacto) subcontrato.contacto = contacto;
         if (telefono) subcontrato.telefono = telefono;
         if (email) subcontrato.email = email;
         if (fechaInicio) subcontrato.fechaInicio = fechaInicio;
         if (fechaFinalizacion) subcontrato.fechaFinalizacion = fechaFinalizacion;
-
-        // Si se proporcionan detalles, actualizarlos y recalcular precios
         if (detalles) {
             subcontrato.detalles = detalles;
 
-            // Recalcular el precio total y total con IVA
             const total = subcontrato.detalles.reduce((sum, detalle) => sum + detalle.precio, 0);
             subcontrato.precioTotal = total;
             subcontrato.precioTotalConIVA = total * 1.19;
         }
 
-        // Guardar los cambios en la base de datos
         await subcontrato.save();
 
         return res.status(200).json({
@@ -104,8 +97,6 @@ const actualizarSubcontrato = async (req, res) => {
     }
 };
 
-
-// Eliminar un subcontrato por ID
 const eliminarSubcontrato = async (req, res) => {
     try {
         const { id } = req.params;

@@ -25,21 +25,17 @@ exports.crearRubro = async (req, res) => {
     }
 };
 
-// Leer todos los rubros (Read)
 exports.obtenerRubros = async (req, res) => {
     try {
         let rubros = await Rubro.find();
-        // Ordenar rubros por clasificacion
         rubros = rubros.sort((a, b) => a.clasificacion.localeCompare(b.clasificacion));
-        
+
         res.status(200).json(rubros);
     } catch (error) {
         res.status(500).json({ error: 'Error al obtener los rubros' });
     }
 };
 
-
-// Leer un rubro por ID (Read)
 exports.obtenerRubroPorId = async (req, res) => {
     try {
         const { id } = req.params;
@@ -55,7 +51,6 @@ exports.obtenerRubroPorId = async (req, res) => {
     }
 };
 
-// Actualizar un rubro por ID (Update)
 exports.actualizarRubro = async (req, res) => {
     try {
         const { id } = req.params;
@@ -73,7 +68,6 @@ exports.actualizarRubro = async (req, res) => {
     }
 };
 
-// Eliminar un rubro por ID (Delete)
 exports.eliminarRubro = async (req, res) => {
     try {
         const { id } = req.params;

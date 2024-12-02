@@ -16,8 +16,8 @@ router.delete('/delete/:id', materiaPrimaController.deleteMateriaPrima);
 
 //INVENTARIO
 
-router.post('/ingresar', inventarioController.ingresarMateriaPrima);
+router.post('/inventario/ingresar', inventarioController.ingresarMateriaPrima);
 
-router.post('/retirar', inventarioController.retirarMateriaPrima);
+router.post('/inventario/descontar', inventarioController.retirarMateriaPrima);
 
 module.exports = router;

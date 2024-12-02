@@ -1,7 +1,6 @@
 const mongoose = require('mongoose');
 const { Schema, model } = mongoose;
 
-// Definir el schema para el Cliente
 const facturaSchema = new Schema({
     numero: {
         type: String,
@@ -26,7 +25,6 @@ const facturaSchema = new Schema({
     versionKey: false
 });
 
-// Método para establecer la URL de acceso a los archivos PDF de facturas
 facturaSchema.methods.setArchivos = function setArchivos(filename) {
     this.archivo = `${process.env.API_URL}/public/uploads/facturas/${filename}`;
 };
